@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+<div class="card">
+
+<div class="card-header">
+
+<h3>Add Product</h3>
+
+</div>
+
+<div class="card-body">
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+<div class="row">
+
+<div class="col-md-6 mb-3">
+
+<label>Product Name</label>
+
+{{ form.name }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Barcode</label>
+
+{{ form.barcode }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Category</label>
+
+{{ form.category }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Price</label>
+
+{{ form.price }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Stock</label>
+
+{{ form.stock }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Image</label>
+
+{{ form.image }}
+
+</div>
+
+</div>
+
+<button class="btn btn-success">
+
+Save Product
+
+</button>
+
+<a href="{% url 'product_list' %}"
+
+class="btn btn-secondary">
+
+Cancel
+
+</a>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

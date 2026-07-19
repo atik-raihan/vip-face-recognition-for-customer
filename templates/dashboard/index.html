@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="card bg-primary">
+                <div class="card-body">
+                    <h2>
+                        <i class="fas fa-user-shield"></i>
+                        VIP Customer Recognition System
+                    </h2>
+                    <p class="mb-0">
+                        AI-powered Face Recognition • POS • WhatsApp Notification • Loyalty Management
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ stats.total_customers }}</h3>
+                    <p>Total Customers</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ stats.vip_customers }}</h3>
+                    <p>VIP Customers</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-star"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>${{ stats.total_revenue }}</h3>
+                    <p>Total Revenue</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-dollar-sign"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-6">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ stats.today_orders }}</h3>
+                    <p>Today's Orders</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success">
+                    <h3 class="card-title">
+                        <i class="fas fa-video"></i>
+                        Camera Status
+                    </h3>
+                </div>
+                <div class="card-body text-center">
+                    <i class="fas fa-video fa-4x text-success mb-3"></i>
+                    <h3>ONLINE</h3>
+                    <p>Face Recognition Service is Running</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h3 class="card-title">
+                        <i class="fas fa-star"></i>
+                        Last VIP Detection
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <h4>No VIP detected yet</h4>
+                    <p>Waiting for camera recognition...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Recent Transactions</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Customer</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#1001</td>
+                        <td>John Doe</td>
+                        <td>$250</td>
+                        <td><span class="badge badge-success">Completed</span></td>
+                    </tr>
+                    <tr>
+                        <td>#1002</td>
+                        <td>Jane Smith</td>
+                        <td>$180</td>
+                        <td><span class="badge badge-success">Completed</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="row">
+
+    <div class="col-md-6">
+
+        <div class="card">
+
+            <div class="card-header bg-success">
+                <h3 class="card-title">
+                    <i class="fas fa-video"></i>
+                    Camera Status
+                </h3>
+            </div>
+
+            <div class="card-body text-center">
+
+                <i class="fas fa-video fa-4x text-success mb-3"></i>
+
+                <h3>ONLINE</h3>
+
+                <p>Face Recognition Service is Running</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="col-md-6">
+
+        <div class="card">
+
+            <div class="card-header bg-warning">
+                <h3 class="card-title">
+                    <i class="fas fa-star"></i>
+                    Last VIP Detection
+                </h3>
+            </div>
+
+            <div class="card-body">
+
+                <h4>No VIP detected yet</h4>
+
+                <p>Waiting for camera recognition...</p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card">
+
+    <div class="card-header">
+        <h3 class="card-title">
+            Recent Transactions
+        </h3>
+    </div>
+
+    <div class="card-body">
+
+        <table class="table table-bordered">
+
+            <thead>
+
+                <tr>
+
+                    <th>Invoice</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                <tr>
+
+                    <td>#1001</td>
+                    <td>John Doe</td>
+                    <td>$250</td>
+                    <td>
+                        <span class="badge badge-success">
+                            Completed
+                        </span>
+                    </td>
+
+                </tr>
+
+                <tr>
+
+                    <td>#1002</td>
+                    <td>Jane Smith</td>
+                    <td>$180</td>
+                    <td>
+                        <span class="badge badge-success">
+                            Completed
+                        </span>
+                    </td>
+
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

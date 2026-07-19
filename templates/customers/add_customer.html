@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+<div class="card">
+
+<div class="card-header">
+
+<h3>Add Customer</h3>
+
+</div>
+
+<div class="card-body">
+
+<form method="POST" enctype="multipart/form-data">
+
+{% csrf_token %}
+
+<div class="row">
+
+<div class="col-md-6 mb-3">
+
+<label>Name</label>
+
+{{ form.name }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Phone</label>
+
+{{ form.phone }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Email</label>
+
+{{ form.email }}
+
+</div>
+
+<div class="col-md-6 mb-3">
+
+<label>Total Purchase</label>
+
+{{ form.total_purchase }}
+
+</div>
+
+<div class="col-md-12 mb-3">
+
+<label>Address</label>
+
+{{ form.address }}
+
+</div>
+
+<div class="col-md-12 mb-3">
+
+<label>Photo (Temporary)</label>
+
+{{ form.photo }}
+
+</div>
+
+</div>
+
+<button class="btn btn-success">
+
+Save Customer
+
+</button>
+
+<a href="{% url 'customer_list' %}"
+
+class="btn btn-secondary">
+
+Cancel
+
+</a>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

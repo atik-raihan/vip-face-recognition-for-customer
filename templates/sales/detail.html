@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+<div class="card">
+
+<div class="card-header bg-info text-white">
+
+<h3>
+
+Invoice #{{ sale.id }}
+
+</h3>
+
+</div>
+
+<div class="card-body">
+
+<h5>
+
+Customer :
+{{ sale.customer.name }}
+
+</h5>
+
+<h6>
+
+Phone :
+{{ sale.customer.phone }}
+
+</h6>
+
+<hr>
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>Product</th>
+<th>Price</th>
+<th>Qty</th>
+<th>Subtotal</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for item in items %}
+
+<tr>
+
+<td>
+
+{{ item.product.name }}
+
+</td>
+
+<td>
+
+৳{{ item.price }}
+
+</td>
+
+<td>
+
+{{ item.quantity }}
+
+</td>
+
+<td>
+
+৳{{ item.subtotal }}
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<div class="text-end">
+
+<h3>
+
+Grand Total
+
+৳{{ sale.total }}
+
+</h3>
+
+</div>
+
+<button
+onclick="window.print()"
+class="btn btn-success">
+
+Print Receipt
+
+</button>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}

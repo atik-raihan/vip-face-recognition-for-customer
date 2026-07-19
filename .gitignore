@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+vip/
+*.egg-info/
+
+# Secrets
+.env
+
+# Django
+db.sqlite3
+*.log
+media/
+
+# Face recognition data (sensitive / regenerable)
+face_recognition_app/embeddings/*.pkl
+*.pkl
+
+# Project artifacts
+face_recognition_app.zip
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

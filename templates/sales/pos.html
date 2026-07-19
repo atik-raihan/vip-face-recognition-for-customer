@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="card">
+
+        <div class="card-header bg-primary text-white">
+            <h3>Point of Sale (POS)</h3>
+        </div>
+
+        <div class="card-body">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="row mb-3">
+
+                    <div class="col-md-6">
+
+                        <label>Customer</label>
+
+                        <select
+                            name="customer"
+                            id="customer"
+                            class="form-control">
+
+                            {% for customer in customers %}
+
+                            <option value="{{ customer.id }}">
+                                {{ customer.name }} - {{ customer.phone }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <label>Product</label>
+
+                        <select
+                            id="product"
+                            class="form-control">
+
+                            <option value="">Select Product</option>
+
+                            {% for product in products %}
+
+                            <option value="{{ product.id }}">
+                                {{ product.name }} - ৳{{ product.price }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label>&nbsp;</label>
+
+                        <button
+                            type="button"
+                            onclick="addProduct()"
+                            class="btn btn-success w-100">
+
+                            Add
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <input
+                    type="hidden"
+                    name="items"
+                    id="items">
+
+                <table class="table table-bordered">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th width="180">Quantity</th>
+                            <th>Subtotal</th>
+                            <th width="120">Action</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="cart">
+
+                    </tbody>
+
+                </table>
+
+                <h3 class="text-end">
+
+                    Total:
+                    ৳<span id="total">0.00</span>
+
+                </h3>
+
+                <button class="btn btn-primary">
+
+                    Complete Sale
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let cart = [];
+
+function renderCart(){
+
+    let html = "";
+    let total = 0;
+
+    cart.forEach((item,index)=>{
+
+        let subtotal = item.price * item.qty;
+
+        total += subtotal;
+
+        html += `
+        <tr>
+
+            <td>${item.name}</td>
+
+            <td>৳${item.price.toFixed(2)}</td>
+
+            <td>
+
+                <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="decrease(${index})">
+
+                    -
+
+                </button>
+
+                <span class="mx-2">${item.qty}</span>
+
+                <button
+                    type="button"
+                    class="btn btn-success btn-sm"
+                    onclick="increase(${index})">
+
+                    +
+
+                </button>
+
+            </td>
+
+            <td>৳${subtotal.toFixed(2)}</td>
+
+            <td>
+
+                <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    onclick="removeItem(${index})">
+
+                    Remove
+
+                </button>
+
+            </td>
+
+        </tr>
+        `;
+
+    });
+
+    document.getElementById("cart").innerHTML = html;
+
+    document.getElementById("total").innerHTML = total.toFixed(2);
+
+    document.getElementById("items").value = JSON.stringify(
+
+        cart.map(item => ({
+            id: item.id,
+            qty: item.qty
+        }))
+
+    );
+
+}
+
+function addProduct(){
+
+    let id = document.getElementById("product").value;
+
+    if(id=="") return;
+
+    fetch("/pos/product/?id="+id)
+
+    .then(response => response.json())
+
+    .then(data => {
+
+        let existing = cart.find(item => item.id == data.id);
+
+        if(existing){
+
+            if(existing.qty < data.stock){
+
+                existing.qty++;
+
+            }else{
+
+                alert("Not enough stock!");
+
+            }
+
+        }else{
+
+            cart.push({
+
+                id: data.id,
+                name: data.name,
+                price: data.price,
+                qty: 1,
+                stock: data.stock
+
+            });
+
+        }
+
+        renderCart();
+
+    });
+
+}
+
+function increase(index){
+
+    if(cart[index].qty < cart[index].stock){
+
+        cart[index].qty++;
+
+        renderCart();
+
+    }else{
+
+        alert("Stock limit reached!");
+
+    }
+
+}
+
+function decrease(index){
+
+    cart[index].qty--;
+
+    if(cart[index].qty <= 0){
+
+        cart.splice(index,1);
+
+    }
+
+    renderCart();
+
+}
+
+function removeItem(index){
+
+    cart.splice(index,1);
+
+    renderCart();
+
+}
+
+</script>
+
+{% endblock %}
+

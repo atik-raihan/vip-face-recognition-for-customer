@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+<div class="row">
+
+<div class="col-md-3">
+
+<div class="small-box bg-primary">
+
+<div class="inner">
+
+<h3>{{ total_sales }}</h3>
+
+<p>Total Sales</p>
+
+</div>
+
+<div class="icon">
+
+<i class="fas fa-shopping-cart"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="small-box bg-success">
+
+<div class="inner">
+
+<h3>৳{{ total_revenue }}</h3>
+
+<p>Total Revenue</p>
+
+</div>
+
+<div class="icon">
+
+<i class="fas fa-dollar-sign"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="small-box bg-info">
+
+<div class="inner">
+
+<h3>{{ total_customers }}</h3>
+
+<p>Customers</p>
+
+</div>
+
+<div class="icon">
+
+<i class="fas fa-users"></i>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="col-md-3">
+
+<div class="small-box bg-warning">
+
+<div class="inner">
+
+<h3>{{ vip_customers }}</h3>
+
+<p>VIP Customers</p>
+
+</div>
+
+<div class="icon">
+
+<i class="fas fa-crown"></i>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-header">
+
+<h3>
+
+Recent Sales
+
+</h3>
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>ID</th>
+<th>Customer</th>
+<th>Total</th>
+<th>Date</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for sale in recent_sales %}
+
+<tr>
+
+<td>{{ sale.id }}</td>
+
+<td>{{ sale.customer.name }}</td>
+
+<td>৳{{ sale.total }}</td>
+
+<td>{{ sale.created_at }}</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="4">
+
+No Sales Yet
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="card-header">
+
+<h3>
+
+Best Selling Products
+
+</h3>
+
+</div>
+
+<div class="card-body">
+
+<table class="table table-bordered">
+
+<thead>
+
+<tr>
+
+<th>Product</th>
+<th>Quantity Sold</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for product in best_products %}
+
+<tr>
+
+<td>{{ product.product__name }}</td>
+
+<td>{{ product.quantity }}</td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+<td colspan="2">
+
+No Data
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}
