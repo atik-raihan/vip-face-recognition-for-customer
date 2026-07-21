@@ -1,0 +1,21 @@
+<!--
+  pos_recognition_widget.html
+
+  Drop this block into your POS template (e.g. templates/sales/pos.html),
+  right before {% endblock %} or just before your closing </div> of the
+  page content. It needs no other files — pure vanilla JS, no build step.
+
+  WHAT IT DOES:
+  - Polls /face-recognition/latest-recognition/ every 3 seconds
+    (adjust the URL prefix below to match your actual urls.py include path)
+  - When a fresh recognition comes in, shows a "Welcome Back" popup with
+    name, VIP badge, and total purchase
+  - Auto-selects that customer in your POS customer dropdown, IF your
+    dropdown's <select> has id="customer-select" and its <option> values
+    are the customer's database ID (adjust CUSTOMER_SELECT_ID below if
+    your POS form uses a different id/name).
+
+  You MUST update the two lines marked "ADJUST THIS" below to match your
+  actual POS page's field names.
+-->
+

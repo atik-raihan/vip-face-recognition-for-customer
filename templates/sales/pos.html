@@ -293,5 +293,90 @@ function removeItem(index){
 
 </script>
 
-{% endblock %}
 
+<!-- ============================================================ -->
+<!-- AI RECOGNITION: Welcome Back modal + auto-select customer     -->
+<!-- ============================================================ -->
+
+<div id="welcome-back-modal" style="
+    display:none;
+    position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.6); z-index:9999;
+    align-items:center; justify-content:center;">
+  <div style="
+      background:#fff; border-radius:10px; padding:30px 40px;
+      max-width:420px; width:90%; text-align:center;
+      box-shadow:0 10px 40px rgba(0,0,0,0.3);">
+    <h2 style="margin:0 0 10px;">WELCOME BACK</h2>
+    <h3 id="wb-customer-name" style="margin:0 0 10px; color:#333;"></h3>
+    <div id="wb-vip-badge" style="
+        display:none; color:#b8860b; font-weight:bold; margin-bottom:10px;">
+      ⭐ VIP CUSTOMER
+    </div>
+    <p style="margin:0 0 20px; color:#555;">
+      Total Purchase:<br>
+      <strong id="wb-total-purchase" style="font-size:1.3em;"></strong> BDT
+    </p>
+    <button onclick="closeWelcomeBackModal()" style="
+        background:#28a745; color:#fff; border:none; padding:10px 24px;
+        border-radius:6px; cursor:pointer; font-size:1em;">
+      Continue
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  // Matches this file's actual dropdown: <select id="customer" name="customer">
+  const CUSTOMER_SELECT_ID = "customer";
+
+  // Matches root urls.py: path("camera/", include("face_recognition_app.urls"))
+  const LATEST_RECOGNITION_URL = "/camera/latest-recognition/";
+
+  const POLL_INTERVAL_MS = 3000;
+  let lastSeenLogId = null;
+
+  function showWelcomeBackModal(data) {
+    document.getElementById("wb-customer-name").textContent = data.customer_name;
+    document.getElementById("wb-total-purchase").textContent =
+      Number(data.total_purchase).toLocaleString();
+    document.getElementById("wb-vip-badge").style.display =
+      data.is_vip ? "block" : "none";
+    document.getElementById("welcome-back-modal").style.display = "flex";
+  }
+
+  window.closeWelcomeBackModal = function () {
+    document.getElementById("welcome-back-modal").style.display = "none";
+  };
+
+  function autoSelectCustomer(customerId) {
+    const select = document.getElementById(CUSTOMER_SELECT_ID);
+    if (!select) return;
+    select.value = String(customerId);
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  async function pollRecognition() {
+    try {
+      const url = new URL(LATEST_RECOGNITION_URL, window.location.origin);
+      if (lastSeenLogId) url.searchParams.set("since_id", lastSeenLogId);
+
+      const response = await fetch(url);
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (data.new) {
+        lastSeenLogId = data.log_id;
+        autoSelectCustomer(data.customer_id);
+        showWelcomeBackModal(data);
+      }
+    } catch (err) {
+      console.debug("Recognition poll failed:", err);
+    }
+  }
+
+  setInterval(pollRecognition, POLL_INTERVAL_MS);
+})();
+</script>
+
+{% endblock %}
