@@ -98,3 +98,7 @@ class RecognitionLog(models.Model):
     @property
     def is_known(self) -> bool:
         return self.customer_id is not None
+
+from .models_settings import SystemSettings  # Item 9/10 settings singleton
+
+from .models_attendance import Employee, EmployeeAttendanceLog  # Item 12

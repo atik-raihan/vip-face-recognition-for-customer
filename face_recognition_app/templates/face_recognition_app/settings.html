@@ -1,0 +1,95 @@
+﻿{% extends "base.html" %}
+{# NOTE: change "base.html" above to whatever your dashboard.html extends,
+   if it's not literally "base.html" -- check the top line of dashboard.html. #}
+
+{% block content %}
+<div class="container-fluid">
+  <h1 class="mt-3 mb-4">Recognition Settings</h1>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="card mb-4">
+    <div class="card-header"><strong>Recognition &amp; VIP Thresholds</strong></div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+          <label>Recognition Threshold (0.0 - 1.0)</label>
+          {{ form.recognition_threshold }}
+          <small class="form-text text-muted">Lower = more lenient face matching. Default 0.65.</small>
+        </div>
+        <div class="form-group">
+          <label>VIP Minimum Purchase</label>
+          {{ form.vip_min_purchase }}
+        </div>
+        <div class="form-group">
+          <label>Default Camera Source</label>
+          {{ form.default_camera_source }}
+          <small class="form-text text-muted">Used when a camera feed is opened without picking a specific camera below.</small>
+        </div>
+        <button type="submit" name="save_settings" class="btn btn-primary">Save Settings</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header"><strong>Cameras</strong></div>
+    <div class="card-body">
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Source Type</th>
+            <th>Source</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for camera in cameras %}
+          <tr>
+            <form method="post" action="{% url 'camera_edit' camera.id %}">
+              {% csrf_token %}
+              <td><input type="text" name="name" class="form-control" value="{{ camera.name }}"></td>
+              <td>
+                <select name="source_type" class="form-control">
+                  <option value="webcam" {% if camera.source_type == "webcam" %}selected{% endif %}>Webcam</option>
+                  <option value="usb" {% if camera.source_type == "usb" %}selected{% endif %}>USB</option>
+                  <option value="rtsp" {% if camera.source_type == "rtsp" %}selected{% endif %}>RTSP</option>
+                  <option value="dvr" {% if camera.source_type == "dvr" %}selected{% endif %}>DVR</option>
+                </select>
+              </td>
+              <td><input type="text" name="source" class="form-control" value="{{ camera.source }}"></td>
+              <td>
+                <button type="submit" class="btn btn-sm btn-secondary">Save</button>
+            </form>
+                <form method="post" action="{% url 'camera_delete' camera.id %}" style="display:inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove this camera?');">Delete</button>
+                </form>
+                <a href="{% url 'video_feed' %}?camera_id={{ camera.id }}" class="btn btn-sm btn-outline-primary" target="_blank">View Feed</a>
+              </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="4">No cameras added yet.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <hr>
+      <h5>Add Camera</h5>
+      <form method="post" action="{% url 'camera_add' %}" class="form-inline">
+        {% csrf_token %}
+        {{ camera_form.name }}
+        {{ camera_form.source_type }}
+        {{ camera_form.source }}
+        <button type="submit" class="btn btn-success ml-2">Add Camera</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

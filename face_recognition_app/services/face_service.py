@@ -52,7 +52,9 @@ DEFAULT_EMBEDDINGS_PATH = os.path.join(
 )
 
 # Falls back to 0.65 if not defined in Django settings / SettingsApp config.
-DEFAULT_RECOGNITION_THRESHOLD = getattr(settings, "RECOGNITION_THRESHOLD", 0.65)
+def get_recognition_threshold():
+    from face_recognition_app.models_settings import SystemSettings
+    return SystemSettings.load().recognition_threshold
 
 INSIGHTFACE_MODEL_NAME = getattr(settings, "INSIGHTFACE_MODEL_NAME", "buffalo_l")
 
@@ -78,7 +80,7 @@ class FaceService:
 
     def __init__(self, embeddings_path: str = DEFAULT_EMBEDDINGS_PATH):
         self.embeddings_path = embeddings_path
-        self.threshold = DEFAULT_RECOGNITION_THRESHOLD
+        self.threshold = get_recognition_threshold()
 
         self._app = FaceAnalysis(
             name=INSIGHTFACE_MODEL_NAME,
@@ -215,7 +217,7 @@ class FaceService:
                 best_score = score
                 best_record = record
 
-        if best_record is None or best_score < self.threshold:
+        if best_record is None or best_score < get_recognition_threshold():
             return None
 
         return {

@@ -23,9 +23,29 @@ def camera(request):
 
 @gzip_page
 def video_feed(request):
-    
+    camera_id = request.GET.get("camera_id")
+    camera_obj = None
+    source = None
+
+    if camera_id:
+        from .models import Camera
+        camera_obj = Camera.objects.filter(id=camera_id, is_active=True).first()
+        if camera_obj:
+            source = camera_obj.connection_string  # NOT camera.source — that field doesn't exist
+            if camera_obj.source_type in ("webcam", "usb"):
+                try:
+                    source = int(source)
+                except (TypeError, ValueError):
+                    source = 0
+
+    if source is None:
+        from .models_settings import SystemSettings
+        settings_row = SystemSettings.load()
+        default_source = getattr(settings_row, "default_camera_source", None)
+        source = default_source if default_source is not None else 0
+
     try:
-        stream = gen_frames(camera_source=0, camera_obj=None)
+        stream = gen_frames(camera_source=source, camera_obj=camera_obj)
     except RuntimeError as exc:
         raise Http404(str(exc))
 
@@ -98,37 +118,37 @@ def latest_recognition(request):
         }
     )
 
-# make sure this import already exists or add it
-
 
 def recognition_dashboard(request):
-    today = timezone.localdate()
+    """
+    Recognition Dashboard (item 5):
+    - Today's total recognitions (known + unknown)
+    - VIP visits today
+    - Normal (known, non-VIP) visits today
+    - Unknown visits today
+    - Recent recognitions list (last 20), with snapshot thumbnail if available
+    """
+    today_start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    todays_logs = (
-        RecognitionLog.objects
-        .select_related("customer", "camera")
-        .filter(created_at__date=today)
-        .order_by("-created_at")
-    )
+    todays_logs = RecognitionLog.objects.filter(recognized_at__gte=today_start)
 
-    total_recognitions = todays_logs.count()
-    vip_recognitions = todays_logs.filter(was_vip_at_time=True).count()
-    normal_recognitions = total_recognitions - vip_recognitions
+    todays_total = todays_logs.count()
+    vip_visits_today = todays_logs.filter(was_vip_at_time=True).count()
+    normal_visits_today = todays_logs.filter(
+        customer__isnull=False, was_vip_at_time=False
+    ).count()
+    unknown_visits_today = todays_logs.filter(customer__isnull=True).count()
 
-    unique_vip_customers = (
-        todays_logs
-        .filter(was_vip_at_time=True)
-        .values("customer_id")
-        .distinct()
-        .count()
+    recent_recognitions = (
+        RecognitionLog.objects.select_related("customer")
+        .order_by("-recognized_at")[:20]
     )
 
     context = {
-        "total_recognitions": total_recognitions,
-        "vip_recognitions": vip_recognitions,
-        "normal_recognitions": normal_recognitions,
-        "unique_vip_customers": unique_vip_customers,
-        "recent_logs": todays_logs[:50],
-        "today": today,
+        "todays_total": todays_total,
+        "vip_visits_today": vip_visits_today,
+        "normal_visits_today": normal_visits_today,
+        "unknown_visits_today": unknown_visits_today,
+        "recent_recognitions": recent_recognitions,
     }
-    return render(request, "face_recognition/recognition_dashboard.html", context)
+    return render(request, "face_recognition_app/dashboard.html", context)

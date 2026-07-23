@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <h3 class="mb-3">Recognition Dashboard</h3>
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="card-title">Today's Recognitions</h6>
+                    <h2>{{ todays_total }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-dark" style="background-color:#ffd54f;">
+                <div class="card-body">
+                    <h6 class="card-title">⭐ VIP Visits</h6>
+                    <h2>{{ vip_visits_today }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="card-title">Normal Visits</h6>
+                    <h2>{{ normal_visits_today }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h6 class="card-title">Unknown Visits</h6>
+                    <h2>{{ unknown_visits_today }}</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Recent Recognitions</h5>
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-bordered mb-0">
+
+                <thead>
+                    <tr>
+                        <th width="80">Snapshot</th>
+                        <th>Customer</th>
+                        <th>Status</th>
+                        <th>Confidence</th>
+                        <th>Camera</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for log in recent_recognitions %}
+                    <tr>
+                        <td>
+                            {% if log.image_snapshot %}
+                            <img src="{{ log.image_snapshot.url }}" width="50" height="50"
+                                 style="object-fit:cover; border-radius:4px;">
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.customer %}
+                                {{ log.customer.name }}
+                                <div class="text-muted small">{{ log.customer.phone }}</div>
+                            {% else %}
+                                <span class="text-muted">Unknown Customer</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if log.was_vip_at_time %}
+                                <span class="badge" style="background-color:#ffd54f; color:#000;">⭐ VIP</span>
+                            {% elif log.customer %}
+                                <span class="badge bg-success">Known</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Unknown</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.confidence|floatformat:2 }}</td>
+                        <td>{{ log.camera_name|default:"Default Camera" }}</td>
+                        <td>{{ log.recognized_at|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            No recognitions yet. Once the camera recognizes someone, entries will appear here.
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
