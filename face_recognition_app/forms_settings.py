@@ -15,7 +15,7 @@ from .models_settings import SystemSettings
 class SystemSettingsForm(forms.ModelForm):
     class Meta:
         model = SystemSettings
-        fields = ["recognition_threshold", "vip_min_purchase", "default_camera_source"]
+        fields = ["recognition_threshold", "vip_min_purchase", "default_camera_source", "ai_vip_messages_enabled"]
         widgets = {
             "recognition_threshold": forms.NumberInput(
                 attrs={"step": "0.01", "min": "0", "max": "1", "class": "form-control"}
@@ -38,4 +38,5 @@ class CameraForm(forms.ModelForm):
                 attrs={"class": "form-control", "placeholder": "0, rtsp://..., or DVR channel"}
             ),
         }
+
 

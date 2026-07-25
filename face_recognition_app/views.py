@@ -43,6 +43,8 @@ def video_feed(request):
         settings_row = SystemSettings.load()
         default_source = getattr(settings_row, "default_camera_source", None)
         source = default_source if default_source is not None else 0
+        if isinstance(source, str) and source.isdigit():
+            source = int(source)
 
     try:
         stream = gen_frames(camera_source=source, camera_obj=camera_obj)

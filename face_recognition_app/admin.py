@@ -44,3 +44,11 @@ class EmployeeAttendanceLogAdmin(admin.ModelAdmin):
     list_display = ("employee", "event_type", "confidence", "camera_name", "timestamp")
     list_filter = ("event_type", "camera_name")
     date_hierarchy = "timestamp"
+
+from .models_branch import Branch
+
+
+@admin.register(Branch)
+class BranchAdmin(admin.ModelAdmin):
+    list_display = ("name", "code", "phone", "is_active", "created_at")
+    search_fields = ("name", "code")

@@ -1,0 +1,80 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <div class="card">
+
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">Employees</h3>
+            <a href="{% url 'employee_add' %}" class="btn btn-success btn-sm">+ Add Employee</a>
+        </div>
+
+        <div class="card-body p-0">
+
+            {% if messages %}
+            <div class="p-3">
+                {% for message in messages %}
+                <div class="alert alert-success">{{ message }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <table class="table table-bordered mb-0">
+                <thead>
+                    <tr>
+                        <th>Photo</th>
+                        <th>Employee ID</th>
+                        <th>Name</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th width="160">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee in employees %}
+                    <tr>
+                        <td>
+                            {% if employee.photo %}
+                            <img src="{{ employee.photo.url }}" width="40" height="40" style="object-fit:cover; border-radius:4px;">
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ employee.employee_id }}</td>
+                        <td>{{ employee.name }}</td>
+                        <td>{{ employee.department|default:"-" }}</td>
+                        <td>
+                            {% if employee.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'employee_edit' employee.id %}" class="btn btn-primary btn-sm">Edit</a>
+                            <a href="{% url 'employee_delete' employee.id %}" class="btn btn-danger btn-sm">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">No employees yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        </div>
+
+        <div class="card-footer">
+            <span class="text-muted small">
+                After adding/updating photos, run <code>python manage.py build_employee_faces</code>
+                to refresh face recognition data.
+            </span>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+

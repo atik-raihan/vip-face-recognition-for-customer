@@ -1,0 +1,116 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <h3 class="mb-3">Attendance Analytics</h3>
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+            <div class="card text-white bg-primary">
+                <div class="card-body">
+                    <h6 class="card-title">Today's Events</h6>
+                    <h2>{{ todays_total_events }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-info">
+                <div class="card-body">
+                    <h6 class="card-title">Employees Present Today</h6>
+                    <h2>{{ unique_employees_today }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-success">
+                <div class="card-body">
+                    <h6 class="card-title">Check-Ins</h6>
+                    <h2>{{ checkins_today }}</h2>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-white bg-secondary">
+                <div class="card-body">
+                    <h6 class="card-title">Check-Outs</h6>
+                    <h2>{{ checkouts_today }}</h2>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Recent Attendance Activity</h5>
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-bordered mb-0">
+
+                <thead>
+                    <tr>
+                        <th width="80">Snapshot</th>
+                        <th>Employee</th>
+                        <th>Department</th>
+                        <th>Event</th>
+                        <th>Confidence</th>
+                        <th>Camera</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td>
+                            {% if log.image_snapshot %}
+                            <img src="{{ log.image_snapshot.url }}" width="50" height="50"
+                                 style="object-fit:cover; border-radius:4px;">
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.employee.name }}</td>
+                        <td>{{ log.employee.department|default:"-" }}</td>
+                        <td>
+                            {% if log.event_type == "in" %}
+                                <span class="badge bg-success">Check In</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Check Out</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ log.confidence|floatformat:2 }}</td>
+                        <td>{{ log.camera_name|default:"Default Camera" }}</td>
+                        <td>{{ log.recognized_at|date:"Y-m-d H:i:s" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            No attendance events yet. Once the camera recognizes an enrolled
+                            employee, entries will appear here.
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+

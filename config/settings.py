@@ -144,3 +144,10 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/login/"
+
+# --- AI VIP manager messages (Item 12 add-on) ---
+# Get a key at https://console.anthropic.com/ -- do NOT commit a real key to
+# source control; consider os.environ.get("ANTHROPIC_API_KEY") instead once
+# you have one working.
+ANTHROPIC_API_KEY = "your-real-key-here"
+ANTHROPIC_MODEL = "claude-sonnet-4-5"

@@ -1,21 +1,12 @@
 ﻿"""
-NEW FILE.
-
 Employee face recognition -- uses the same InsightFace approach as
 services/face_service.py, but against a SEPARATE embeddings pool
 (employee_embeddings.pkl) so attendance logic never mixes with customer
-VIP recognition. Different thresholds, different dedupe rules, different
-failure modes -- keeping them apart means a bug in one can't touch the
-other.
+VIP recognition.
 
-OPTIMIZATION TODO (not a correctness issue): this tries to reuse the
-InsightFace analyzer already loaded by face_service.py's singleton (to
-avoid loading the buffalo_l model into memory twice). It does this via
-rom .face_service import face_service + ace_service.app as a guess
-at the attribute name -- if that guess is wrong it silently falls back to
-loading its own separate analyzer instance, which still works correctly,
-just uses more RAM and a slower first request. Paste face_service.py's
-class definition if you want this tightened up to guarantee sharing.
+Shares the InsightFace analyzer already loaded by FaceService's singleton
+(via FaceService.get_instance()._app) instead of loading buffalo_l a
+second time.
 """
 import pickle
 from pathlib import Path
@@ -24,8 +15,8 @@ import numpy as np
 from django.conf import settings
 from django.utils import timezone
 
-from .models_attendance import Employee, EmployeeAttendanceLog
-from .models_settings import SystemSettings
+from ..models_attendance import Employee, EmployeeAttendanceLog
+from ..models_settings import SystemSettings
 
 EMBEDDINGS_PATH = (
     Path(settings.BASE_DIR) / "face_recognition_app" / "embeddings" / "employee_embeddings.pkl"
@@ -48,22 +39,12 @@ class EmployeeRecognitionService:
         self._load_embeddings()
 
     def _load_analyzer(self):
-        # Try to reuse the shared FaceService analyzer first.
-        try:
-            from .services.face_service import face_service  # adjust name/path if this doesn't match your file
-            if hasattr(face_service, "app") and face_service.app is not None:
-                self.analyzer = face_service.app
-                return
-        except Exception:
-            pass
+        # Reuse the shared FaceService singleton's already-loaded InsightFace
+        # analyzer instead of loading buffalo_l a second time.
+        from .face_service import FaceService
 
-        # Fallback: load a separate InsightFace instance (works, costs more RAM).
-        from insightface.app import FaceAnalysis
-
-        model_root = getattr(settings, "INSIGHTFACE_MODEL_ROOT", None)
-        model_name = getattr(settings, "INSIGHTFACE_MODEL_NAME", "buffalo_l")
-        self.analyzer = FaceAnalysis(name=model_name, root=model_root)
-        self.analyzer.prepare(ctx_id=-1)  # CPU
+        face_service = FaceService.get_instance()
+        self.analyzer = face_service._app
 
     def _load_embeddings(self):
         if EMBEDDINGS_PATH.exists():
@@ -128,6 +109,7 @@ class EmployeeRecognitionService:
             confidence=confidence,
         )
 
-
-employee_recognition_service = EmployeeRecognitionService()
+    @classmethod
+    def get_instance(cls):
+        return cls()
 

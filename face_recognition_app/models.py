@@ -102,3 +102,5 @@ class RecognitionLog(models.Model):
 from .models_settings import SystemSettings  # Item 9/10 settings singleton
 
 from .models_attendance import Employee, EmployeeAttendanceLog  # Item 12
+
+from .models_branch import Branch

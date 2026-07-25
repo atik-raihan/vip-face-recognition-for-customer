@@ -1,15 +1,14 @@
 ﻿"""
-UPDATED FILE (was created earlier this session) -- adds two fields for
-Item 12 attendance. Since this is a file we generated ourselves and no
-manual edits have been made to it, it's safe to overwrite wholesale rather
-than patch in place.
+UPDATED FILE (created earlier this session, safe to overwrite wholesale --
+no manual edits have been made to it).
 
 Holds the app-wide configurable settings:
-- recognition_threshold        -> customer/VIP face match threshold
-- vip_min_purchase             -> minimum spend to flag a customer VIP
-- default_camera_source        -> fallback source for video_feed
-- employee_recognition_threshold -> separate threshold for employee/attendance matching [NEW]
-- attendance_dedupe_seconds    -> cooldown between logging repeat recognitions of the same employee [NEW]
+- recognition_threshold           -> customer/VIP face match threshold
+- vip_min_purchase                -> minimum spend to flag a customer VIP
+- default_camera_source           -> fallback source for video_feed
+- employee_recognition_threshold  -> employee/attendance match threshold
+- attendance_dedupe_seconds       -> cooldown between attendance log entries
+- ai_vip_messages_enabled         -> toggle for AI-generated manager heads-up messages [NEW]
 
 Singleton pattern: only ever one row, pk=1. Always fetch it with
 SystemSettings.load() -- never SystemSettings.objects.all().
@@ -40,7 +39,11 @@ class SystemSettings(models.Model):
     )
     attendance_dedupe_seconds = models.IntegerField(
         default=300,
-        help_text="Minimum seconds between two attendance log entries for the same employee (avoids spamming logs while someone stands in frame).",
+        help_text="Minimum seconds between two attendance log entries for the same employee.",
+    )
+    ai_vip_messages_enabled = models.BooleanField(
+        default=True,
+        help_text="If on, VIP arrival WhatsApp messages to the manager are AI-personalized using purchase history. If off, a plain template message is sent instead.",
     )
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -54,7 +57,6 @@ class SystemSettings(models.Model):
         cache.set("system_settings", self, timeout=None)
 
     def delete(self, *args, **kwargs):
-        # Singleton row is never deleted.
         pass
 
     @classmethod

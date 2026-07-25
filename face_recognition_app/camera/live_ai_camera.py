@@ -22,11 +22,13 @@ from django.utils import timezone
 
 from face_recognition_app.services.face_service import FaceService
 from face_recognition_app.models import RecognitionLog, Camera
+from face_recognition_app.services.employee_recognition_service import EmployeeRecognitionService
 
 # Colors (BGR) for overlay drawing
 COLOR_VIP = (0, 215, 255)       # gold
 COLOR_KNOWN = (0, 200, 0)       # green
 COLOR_UNKNOWN = (0, 0, 220)     # red
+COLOR_STAFF = (255, 165, 0)  # orange -- adjust to taste
 
 # Avoid re-logging / re-notifying the same customer within this window (seconds)
 DEDUPE_WINDOW_SECONDS = 60
@@ -132,7 +134,8 @@ def gen_frames(camera_source=0, camera_obj: Camera = None):
     for multiple camera sources without blocking.
     """
     face_service = FaceService.get_instance()
-    cap = cv2.VideoCapture(camera_source)
+    employee_recognition_service = EmployeeRecognitionService.get_instance()
+    cap = cv2.VideoCapture(camera_source, cv2.CAP_DSHOW)
 
     if not cap.isOpened():
         raise RuntimeError(f"Unable to open camera source: {camera_source}")
@@ -156,8 +159,21 @@ def gen_frames(camera_source=0, camera_obj: Camera = None):
                     color = COLOR_KNOWN
                     label = f"{match['customer_name']} ({match['confidence']*100:.1f}%)"
                 else:
-                    color = COLOR_UNKNOWN
-                    label = "Unknown Customer"
+                    # Not a known customer -- check the employee pool before
+                    # falling back to "Unknown" (Item 12).
+                    employee, emp_confidence = employee_recognition_service.recognize(face["embedding"])
+                    if employee is not None:
+                        color = COLOR_STAFF
+                        label = f"Staff: {employee.name} ({emp_confidence*100:.1f}%)"
+                        employee_recognition_service.log_attendance(
+                            employee,
+                            emp_confidence,
+                            camera=camera_obj,
+                            camera_name=camera_obj.name if camera_obj else "",
+                        )
+                    else:
+                        color = COLOR_UNKNOWN
+                        label = "Unknown Customer"
 
                 _draw_label(frame, bbox, label, color)
                 _handle_recognition_event(frame, bbox, match, camera_obj)

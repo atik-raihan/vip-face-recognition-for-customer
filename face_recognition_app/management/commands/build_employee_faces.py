@@ -31,9 +31,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         from face_recognition_app.services.employee_recognition_service import (
-            employee_recognition_service,
+            EmployeeRecognitionService,
         )
 
+        employee_recognition_service = EmployeeRecognitionService.get_instance()
         analyzer = employee_recognition_service.analyzer
         embeddings = {}
         skipped = []
