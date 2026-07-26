@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {# NOTE: change "base.html" above to whatever your dashboard.html extends,
-   if it's not literally "base.html" — check the top line of dashboard.html. #}
+   if it's not literally "base.html" -- check the top line of dashboard.html. #}
 
 {% block content %}
 <div class="container-fluid">
@@ -31,6 +31,10 @@
           {{ form.default_camera_source }}
           <small class="form-text text-muted">Used when a camera feed is opened without picking a specific camera below.</small>
         </div>
+        <div class="form-group form-check">
+          {{ form.ai_vip_messages_enabled }}
+          <label class="form-check-label">Enable AI-personalized VIP WhatsApp messages</label>
+        </div>
         <button type="submit" name="save_settings" class="btn btn-primary">Save Settings</button>
       </form>
     </div>
@@ -44,7 +48,8 @@
           <tr>
             <th>Name</th>
             <th>Source Type</th>
-            <th>Source</th>
+            <th>Connection String</th>
+            <th>Branch</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -62,7 +67,15 @@
                   <option value="dvr" {% if camera.source_type == "dvr" %}selected{% endif %}>DVR</option>
                 </select>
               </td>
-              <td><input type="text" name="source" class="form-control" value="{{ camera.source }}"></td>
+              <td><input type="text" name="connection_string" class="form-control" value="{{ camera.connection_string }}"></td>
+              <td>
+                <select name="branch" class="form-control">
+                  <option value="">-- None --</option>
+                  {% for branch in branches %}
+                  <option value="{{ branch.id }}" {% if camera.branch_id == branch.id %}selected{% endif %}>{{ branch.name }}</option>
+                  {% endfor %}
+                </select>
+              </td>
               <td>
                 <button type="submit" class="btn btn-sm btn-secondary">Save</button>
             </form>
@@ -74,7 +87,7 @@
               </td>
           </tr>
           {% empty %}
-          <tr><td colspan="4">No cameras added yet.</td></tr>
+          <tr><td colspan="5">No cameras added yet.</td></tr>
           {% endfor %}
         </tbody>
       </table>
@@ -85,7 +98,8 @@
         {% csrf_token %}
         {{ camera_form.name }}
         {{ camera_form.source_type }}
-        {{ camera_form.source }}
+        {{ camera_form.connection_string }}
+        {{ camera_form.branch }}
         <button type="submit" class="btn btn-success ml-2">Add Camera</button>
       </form>
     </div>

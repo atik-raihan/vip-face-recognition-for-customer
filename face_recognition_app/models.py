@@ -1,6 +1,7 @@
-import uuid
+﻿import uuid
 
 from django.db import models
+from .models_branch import Branch
 from django.utils import timezone
 
 from customers.models import Customer
@@ -42,6 +43,7 @@ class Camera(models.Model):
     # For webcam/usb: device index as a string, e.g. "0"
     # For rtsp/dvr: full stream URL, e.g. "rtsp://user:pass@192.168.1.10/stream1"
     connection_string = models.CharField(max_length=255, default="0")
+    branch = models.ForeignKey(Branch, on_delete=models.SET_NULL, null=True, blank=True, related_name="cameras")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -104,3 +106,5 @@ from .models_settings import SystemSettings  # Item 9/10 settings singleton
 from .models_attendance import Employee, EmployeeAttendanceLog  # Item 12
 
 from .models_branch import Branch
+
+

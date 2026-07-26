@@ -1,22 +1,18 @@
 ﻿"""
 NEW FILE -- does not touch your existing views.py (camera, video_feed,
 latest_recognition, recognition_dashboard all stay exactly as they are).
-
 Covers Item 10 (settings page + camera CRUD UI).
 """
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
-
 from .forms_settings import CameraForm, SystemSettingsForm
 from .models import Camera
 from .models_settings import SystemSettings
-
-
+from .models_branch import Branch
 @login_required
 def settings_page(request):
     settings_obj = SystemSettings.load()
-
     if request.method == "POST" and "save_settings" in request.POST:
         form = SystemSettingsForm(request.POST, instance=settings_obj)
         if form.is_valid():
@@ -25,10 +21,9 @@ def settings_page(request):
             return redirect("recognition_settings")
     else:
         form = SystemSettingsForm(instance=settings_obj)
-
     cameras = Camera.objects.all().order_by("id")
     camera_form = CameraForm()
-
+    branches = Branch.objects.filter(is_active=True).order_by("name")
     return render(
         request,
         "face_recognition_app/settings.html",
@@ -36,10 +31,9 @@ def settings_page(request):
             "form": form,
             "cameras": cameras,
             "camera_form": camera_form,
+            "branches": branches,
         },
     )
-
-
 @login_required
 def camera_add(request):
     if request.method == "POST":
@@ -50,8 +44,6 @@ def camera_add(request):
         else:
             messages.error(request, f"Could not add camera: {form.errors.as_text()}")
     return redirect("recognition_settings")
-
-
 @login_required
 def camera_edit(request, camera_id):
     camera = get_object_or_404(Camera, id=camera_id)
@@ -63,8 +55,6 @@ def camera_edit(request, camera_id):
         else:
             messages.error(request, f"Could not update camera: {form.errors.as_text()}")
     return redirect("recognition_settings")
-
-
 @login_required
 def camera_delete(request, camera_id):
     camera = get_object_or_404(Camera, id=camera_id)
@@ -72,4 +62,3 @@ def camera_delete(request, camera_id):
         camera.delete()
         messages.success(request, "Camera removed.")
     return redirect("recognition_settings")
-

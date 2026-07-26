@@ -1,4 +1,6 @@
-from django.db import models
+﻿from django.db import models
+
+from face_recognition_app.models_branch import Branch
 
 
 class Customer(models.Model):
@@ -33,6 +35,15 @@ class Customer(models.Model):
 
     is_vip = models.BooleanField(
         default=False
+    )
+
+    branch = models.ForeignKey(
+        Branch,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="customers",
+        help_text="Which branch this customer is primarily associated with (optional)."
     )
 
     created_at = models.DateTimeField(
