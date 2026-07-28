@@ -1,0 +1,96 @@
+from django.db.models import Count
+from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import render
+from .models import RecognitionLog
+
+
+@login_required
+def recognition_dashboard(request):
+    today = timezone.now().date()
+    today_start = timezone.make_aware(
+        timezone.datetime.combine(today, timezone.datetime.min.time())
+    )
+    today_end = timezone.make_aware(
+        timezone.datetime.combine(today, timezone.datetime.max.time())
+    )
+
+    today_logs = RecognitionLog.objects.filter(
+        created_at__range=(today_start, today_end)
+    )
+    today_total = today_logs.count()
+    today_vip = today_logs.filter(was_vip_at_time=True).count()
+    today_normal = today_total - today_vip
+    today_unique = (
+        today_logs.exclude(customer__isnull=True)
+        .values("customer")
+        .distinct()
+        .count()
+    )
+
+    all_time_total = RecognitionLog.objects.count()
+    all_time_vip = RecognitionLog.objects.filter(was_vip_at_time=True).count()
+
+    recent_logs = (
+        RecognitionLog.objects.select_related("customer", "camera")
+        .order_by("-created_at")[:50]
+    )
+
+    hourly_data = []
+    for hour in range(24):
+        h_start = today_start + timezone.timedelta(hours=hour)
+        h_end = today_start + timezone.timedelta(hours=hour + 1)
+        hourly_data.append(
+            RecognitionLog.objects.filter(created_at__range=(h_start, h_end)).count()
+        )
+
+    context = {
+        "today_total": today_total,
+        "today_vip": today_vip,
+        "today_normal": today_normal,
+        "today_unique_customers": today_unique,
+        "all_time_total": all_time_total,
+        "all_time_vip": all_time_vip,
+        "recent_logs": recent_logs,
+        "hourly_data": hourly_data,
+    }
+    return render(request, "face_recognition_app/recognition_dashboard.html", context)
+
+
+@login_required
+def recognition_dashboard_api(request):
+    today = timezone.now().date()
+    today_start = timezone.make_aware(
+        timezone.datetime.combine(today, timezone.datetime.min.time())
+    )
+    today_end = timezone.make_aware(
+        timezone.datetime.combine(today, timezone.datetime.max.time())
+    )
+
+    today_logs = RecognitionLog.objects.filter(created_at__range=(today_start, today_end))
+    today_total = today_logs.count()
+    today_vip = today_logs.filter(was_vip_at_time=True).count()
+
+    latest = (
+        RecognitionLog.objects.select_related("customer")
+        .order_by("-created_at")[:10]
+    )
+    latest_list = []
+    for log in latest:
+        latest_list.append({
+            "id": log.id,
+            "customer_name": log.customer.name if log.customer else "Unknown",
+            "confidence": round(log.confidence, 2) if log.confidence else None,
+            "was_vip": log.was_vip_at_time,
+            "camera_name": log.camera.name if log.camera else "Default",
+            "timestamp": log.created_at.strftime("%H:%M:%S"),
+            "snapshot_url": log.snapshot.url if log.snapshot else None,
+        })
+
+    return JsonResponse({
+        "today_total": today_total,
+        "today_vip": today_vip,
+        "today_normal": today_total - today_vip,
+        "latest": latest_list,
+    })

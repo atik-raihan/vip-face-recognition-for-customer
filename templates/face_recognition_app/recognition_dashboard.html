@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+  <h2>Recognition Dashboard</h2>
+
+  <div class="row">
+    <div class="col-md-3"><div class="panel panel-primary"><div class="panel-body"><h3>{{ today_total }}</h3><p>Today Total</p></div></div></div>
+    <div class="col-md-3"><div class="panel panel-warning"><div class="panel-body"><h3>{{ today_vip }}</h3><p>VIP Visits</p></div></div></div>
+    <div class="col-md-3"><div class="panel panel-success"><div class="panel-body"><h3>{{ today_normal }}</h3><p>Normal Visits</p></div></div></div>
+    <div class="col-md-3"><div class="panel panel-default"><div class="panel-body"><h3>{{ today_unknown }}</h3><p>Unknown Faces</p></div></div></div>
+  </div>
+
+  <h3>Recent Recognitions</h3>
+  <table class="table table-bordered table-striped">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Customer</th>
+        <th>VIP</th>
+        <th>Confidence</th>
+        <th>Camera</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in recent_logs %}
+      <tr>
+        <td>{{ log.recognized_at|date:"Y-m-d H:i:s" }}</td>
+        <td>{% if log.customer %}{{ log.customer.name }}{% else %}Unknown{% endif %}</td>
+        <td>{% if log.was_vip_at_time %}YES{% else %}NO{% endif %}</td>
+        <td>{{ log.confidence|floatformat:2 }}</td>
+        <td>{{ log.camera.name|default:"Default" }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">No recognitions yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

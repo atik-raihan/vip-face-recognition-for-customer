@@ -1,4 +1,3 @@
-from face_recognition_app.models import SystemSettings
 """
 face_recognition_app/services/face_service.py
 
@@ -10,7 +9,7 @@ Responsibilities:
 - Load the InsightFace model exactly once (singleton pattern).
 - Detect faces in a BGR (OpenCV) image and return embeddings.
 - Load/save the customer embeddings database
-  (face_recognition_app/embeddings/customer_embeddings.pkl ??? same path
+  (face_recognition_app/embeddings/customer_embeddings.pkl — same path
   your existing build_faces command already writes to).
 - Compare a live embedding against the stored database and return the
   best matching customer (or None if nothing clears the threshold).
@@ -232,4 +231,3 @@ class FaceService:
     def set_threshold(self, threshold: float) -> None:
         """Allow the Settings page to update the recognition threshold at runtime."""
         self.threshold = float(threshold)
-
