@@ -12,6 +12,20 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 
+ANTHROPIC_MODEL = "claude-sonnet-4-5"
+
+# ============================================
+# WhatsApp Cloud API Configuration
+# ============================================
+
+WHATSAPP_PHONE_NUMBER_ID = "1214008871799249"
+
+WHATSAPP_ACCESS_TOKEN = "EAAeneTLHa6ABSMtTd3J8RlMid27yyrjwEWmltbBkc42bRpI1UyvHI2sUNrQqkkkOjofcPlpzECJpH8VPjzu9CTB0hQ7KLOAzY64ZBLTNLYHrhRAVpu2Ymti4wSBeMDZB1zA9aFu4Fea3ZAMev0augU9ibMQk755mSssbhj6dsZCrwoz6dk4NL2trDAayWnmjLjMHEAKEwPx7wE0pOvUsZBSXzJJVIxNZCSHauAUBpj7WoXJBTtDqT49QgBK8Cn85DgNNFgI9le1dmxZBLomOG07AUy8"
+
+WHATSAPP_MANAGER_NUMBER = "8801752588744"
+
+WHATSAPP_API_VERSION = "v25.0"
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 

@@ -99,11 +99,20 @@ def _handle_recognition_event(frame, bbox, match, camera_obj):
     dedupe_key = "unknown"
 
     if match is not None:
+        print("=" * 60)
+        print("MATCH DATA")
+        print(match)
+        print("Customer ID:", match.get("customer_id"))
+
         customer_obj = Customer.objects.filter(id=match["customer_id"]).first()
+
+        print("Customer Obj:", customer_obj)
+        print("Customer Count:", Customer.objects.count())
+        print("=" * 60)
+
         is_vip = match.get("vip", False)
         confidence = match["confidence"]
         dedupe_key = f"customer_{match['customer_id']}"
-
     if not _should_log(dedupe_key):
         return
 

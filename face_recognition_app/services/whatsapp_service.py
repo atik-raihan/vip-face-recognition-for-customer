@@ -62,8 +62,20 @@ class WhatsAppService:
         }
 
         try:
-            response = requests.post(self._endpoint(), json=payload, headers=headers, timeout=10)
-            if response.status_code == 200:
+            response = requests.post(
+                self._endpoint(),
+                json=payload,
+                headers=headers,
+                timeout=10,
+            )
+
+            print("=" * 50)
+            print("Status Code:", response.status_code)
+            print("Response:")
+            print(response.text)
+            print("=" * 50)
+
+            if response.status_code in (200, 201):
                 return True
             logger.error(
                 "WhatsApp send failed (status %s): %s",
