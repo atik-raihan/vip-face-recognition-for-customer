@@ -6,22 +6,41 @@ from .models_attendance import EmployeeAttendanceLog
 
 def attendance_dashboard(request):
     """
-    Employee Attendance Analytics Dashboard - separate from the existing
-    /camera/attendance/ list page (untouched), this adds the summary
-    stats + recent activity view for item 12's "analytics" scope.
+    Employee Attendance Analytics Dashboard
     """
-    today_start = timezone.localtime().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    todays_logs = EmployeeAttendanceLog.objects.filter(recognized_at__gte=today_start)
+    today_start = timezone.localtime().replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0,
+    )
+
+    # Use timestamp instead of recognized_at
+    todays_logs = EmployeeAttendanceLog.objects.filter(
+        timestamp__gte=today_start
+    )
 
     todays_total_events = todays_logs.count()
-    unique_employees_today = todays_logs.values("employee_id").distinct().count()
-    checkins_today = todays_logs.filter(event_type=EmployeeAttendanceLog.CHECK_IN).count()
-    checkouts_today = todays_logs.filter(event_type=EmployeeAttendanceLog.CHECK_OUT).count()
+
+    unique_employees_today = (
+        todays_logs.values("employee_id")
+        .distinct()
+        .count()
+    )
+
+    checkins_today = todays_logs.filter(
+        event_type=EmployeeAttendanceLog.CHECK_IN
+    ).count()
+
+    checkouts_today = todays_logs.filter(
+        event_type=EmployeeAttendanceLog.CHECK_OUT
+    ).count()
 
     recent_logs = (
-        EmployeeAttendanceLog.objects.select_related("employee")
-        .order_by("-recognized_at")[:20]
+        EmployeeAttendanceLog.objects
+        .select_related("employee")
+        .order_by("-timestamp")[:20]
     )
 
     context = {
@@ -31,5 +50,9 @@ def attendance_dashboard(request):
         "checkouts_today": checkouts_today,
         "recent_logs": recent_logs,
     }
-    return render(request, "face_recognition_app/attendance_dashboard.html", context)
 
+    return render(
+        request,
+        "face_recognition_app/attendance_dashboard.html",
+        context,
+    )

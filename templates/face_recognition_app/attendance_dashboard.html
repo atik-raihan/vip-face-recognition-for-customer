@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Dashboard{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row mb-3">
+        <div class="col">
+            <h2>
+                <i class="fas fa-calendar-check"></i>
+                Employee Attendance Dashboard
+            </h2>
+        </div>
+    </div>
+
+    <div class="row">
+
+        <div class="col-md-3">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ todays_total_events }}</h3>
+                    <p>Today's Events</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-list"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ unique_employees_today }}</h3>
+                    <p>Employees Present</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="small-box bg-primary">
+                <div class="inner">
+                    <h3>{{ checkins_today }}</h3>
+                    <p>Check Ins</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-sign-in-alt"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ checkouts_today }}</h3>
+                    <p>Check Outs</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-sign-out-alt"></i>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="card">
+
+        <div class="card-header">
+            <h3 class="card-title">Recent Attendance</h3>
+        </div>
+
+        <div class="card-body table-responsive">
+
+            <table class="table table-bordered table-striped">
+
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Event</th>
+                        <th>Confidence</th>
+                        <th>Camera</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                {% for log in recent_logs %}
+
+                    <tr>
+                        <td>{{ log.employee }}</td>
+
+                        <td>
+                            {% if log.event_type == "CHECK_IN" %}
+                                <span class="badge badge-success">Check In</span>
+                            {% elif log.event_type == "CHECK_OUT" %}
+                                <span class="badge badge-warning">Check Out</span>
+                            {% else %}
+                                {{ log.event_type }}
+                            {% endif %}
+                        </td>
+
+                        <td>{{ log.confidence|floatformat:2 }}</td>
+
+                        <td>{{ log.camera_name|default:"-" }}</td>
+
+                        <td>{{ log.timestamp|date:"Y-m-d H:i:s" }}</td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            No attendance records found.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
