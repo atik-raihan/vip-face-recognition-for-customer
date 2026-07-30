@@ -129,11 +129,13 @@ def _handle_recognition_event(frame, bbox, match, camera_obj):
 
     try:
         from face_recognition_app.services.recognition_events import on_customer_recognized
-
+        print("\nCalling on_customer_recognized()...")
         on_customer_recognized(log_entry)
-    except ImportError:
-        pass
-
+        print("Finished on_customer_recognized()")
+    except Exception as e:
+        print("\nRecognition Event Error")
+        print(type(e).__name__)
+        print(e)
 
 def gen_frames(camera_source=0, camera_obj: Camera = None):
     """

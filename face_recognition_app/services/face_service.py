@@ -204,24 +204,62 @@ class FaceService:
     def recognize(self, embedding: np.ndarray) -> Optional[Dict[str, Any]]:
         """
         Compare a live embedding against every record in the database and
-        return the best match if it clears self.threshold, else None.
+        return the best match if it clears the threshold, else None.
         """
+
+        # Always reload the latest embeddings from disk (useful while debugging)
+        self.reload_database()
+
+        print("\n" + "=" * 70)
+        print("FACE RECOGNITION DEBUG")
+        print("=" * 70)
+        print(f"Embeddings file : {self.embeddings_path}")
+        print(f"Database size   : {len(self._database)}")
+        print(f"Threshold       : {get_recognition_threshold()}")
+
         if not self._database:
+            print("No customer database loaded.")
+            print("=" * 70)
             return None
 
         best_record = None
         best_score = -1.0
 
-        for record in self._database:
+        for i, record in enumerate(self._database, start=1):
             score = self.cosine_similarity(embedding, record["embedding"])
+
+            print(
+                f"[{i}] "
+                f"ID={record.get('customer_id')} | "
+                f"Name={record.get('customer_name')} | "
+                f"VIP={record.get('vip')} | "
+                f"Score={score:.4f}"
+            )
+
             if score > best_score:
                 best_score = score
                 best_record = record
 
-        if best_record is None or best_score < get_recognition_threshold():
+        print("-" * 70)
+        print("BEST MATCH")
+        print(best_record)
+        print(f"Best Score : {best_score:.4f}")
+
+        if best_record is None:
+            print("Result : None")
+            print("=" * 70)
             return None
 
-        return {
+        threshold = get_recognition_threshold()
+
+        if best_score < threshold:
+            print(
+                f"Rejected (score {best_score:.4f} < threshold {threshold:.4f})"
+            )
+            print("=" * 70)
+            return None
+
+        result = {
             "customer_id": best_record["customer_id"],
             "customer_name": best_record["customer_name"],
             "phone": best_record.get("phone"),
@@ -229,7 +267,8 @@ class FaceService:
             "confidence": round(best_score, 4),
         }
 
-    def set_threshold(self, threshold: float) -> None:
-        """Allow the Settings page to update the recognition threshold at runtime."""
-        self.threshold = float(threshold)
+        print("RETURNING")
+        print(result)
+        print("=" * 70)
 
+        return result
