@@ -29,3 +29,4 @@ face_recognition_app.zip
 # OS
 .DS_Store
 Thumbs.db
+*.bak

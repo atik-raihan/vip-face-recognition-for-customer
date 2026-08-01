@@ -9,8 +9,8 @@
              class="brand-image img-circle elevation-3"
              style="opacity:.8">
 
-        <span class="brand-text font-weight-light text-warning">
-            TEST SIDEBAR
+        <span class="brand-text font-weight-light">
+            VIP Recognition
         </span>
     </a>
 
@@ -49,6 +49,22 @@
                     </a>
                 </li>
 
+                <!-- Analytics -->
+                <li class="nav-item">
+                    <a href="{% url 'analytics_dashboard' %}" class="nav-link">
+                        <i class="nav-icon fas fa-chart-pie"></i>
+                        <p>Analytics</p>
+                    </a>
+                </li>
+
+                <!-- Camera Wall -->
+                <li class="nav-item">
+                    <a href="{% url 'camera_wall' %}" class="nav-link">
+                        <i class="nav-icon fas fa-th"></i>
+                        <p>Camera Wall</p>
+                    </a>
+                </li>
+
                 <!-- Live Camera -->
                 <li class="nav-item">
                     <a href="{% url 'camera' %}" class="nav-link">
@@ -57,7 +73,7 @@
                     </a>
                 </li>
 
-                <!-- Latest Recognition -->
+                <!-- Recognition Logs -->
                 <li class="nav-item">
                     <a href="{% url 'recognition_dashboard' %}" class="nav-link">
                         <i class="nav-icon fas fa-history"></i>
@@ -89,7 +105,7 @@
                     </a>
                 </li>
 
-                <!-- POS -->
+                <!-- Point of Sale -->
                 <li class="nav-item">
                     <a href="{% url 'pos' %}" class="nav-link">
                         <i class="nav-icon fas fa-cash-register"></i>
@@ -97,7 +113,7 @@
                     </a>
                 </li>
 
-                <!-- Sales -->
+                <!-- Sales History -->
                 <li class="nav-item">
                     <a href="{% url 'sales_history' %}" class="nav-link">
                         <i class="nav-icon fas fa-receipt"></i>
@@ -153,7 +169,7 @@
                     </a>
                 </li>
 
-                <!-- Admin Logout -->
+                <!-- Logout -->
                 <li class="nav-item">
                     <a href="/admin/logout/" class="nav-link">
                         <i class="nav-icon fas fa-sign-out-alt"></i>

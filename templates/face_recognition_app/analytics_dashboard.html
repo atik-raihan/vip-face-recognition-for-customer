@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}
+Analytics Dashboard
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+
+    <div class="row mb-3">
+
+        <div class="col">
+
+            <h2>
+                <i class="fas fa-chart-line"></i>
+                Analytics Dashboard
+            </h2>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-6">
+
+            <div class="card">
+
+                <div class="card-header bg-primary">
+                    <h3 class="card-title">
+                        Daily Visitors
+                    </h3>
+                </div>
+
+                <div class="card-body text-center">
+
+                    <img
+                        class="img-fluid"
+                        src="data:image/png;base64,{{ visitors_chart }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6">
+
+            <div class="card">
+
+                <div class="card-header bg-success">
+                    <h3 class="card-title">
+                        VIP Visits This Week
+                    </h3>
+                </div>
+
+                <div class="card-body text-center">
+
+                    <img
+                        class="img-fluid"
+                        src="data:image/png;base64,{{ vip_chart }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-6">
+
+            <div class="card">
+
+                <div class="card-header bg-info">
+                    <h3 class="card-title">
+                        Recognition Success Rate
+                    </h3>
+                </div>
+
+                <div class="card-body text-center">
+
+                    <img
+                        class="img-fluid"
+                        src="data:image/png;base64,{{ recognition_chart }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-6">
+
+            <div class="card">
+
+                <div class="card-header bg-warning">
+                    <h3 class="card-title">
+                        Sales by Day
+                    </h3>
+                </div>
+
+                <div class="card-body text-center">
+
+                    <img
+                        class="img-fluid"
+                        src="data:image/png;base64,{{ sales_chart }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="row">
+
+        <div class="col-lg-12">
+
+            <div class="card">
+
+                <div class="card-header bg-danger">
+
+                    <h3 class="card-title">
+                        Employee Attendance Trend
+                    </h3>
+
+                </div>
+
+                <div class="card-body text-center">
+
+                    <img
+                        class="img-fluid"
+                        src="data:image/png;base64,{{ attendance_chart }}"
+                    >
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
