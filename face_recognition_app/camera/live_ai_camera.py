@@ -49,18 +49,47 @@ def _should_log(key: str) -> bool:
 
 def _draw_label(frame, bbox, text, color):
     x1, y1, x2, y2 = bbox
-    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
 
-    (text_w, text_h), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.6, 2)
-    cv2.rectangle(frame, (x1, y1 - text_h - 12), (x1 + text_w + 10, y1), color, -1)
+    # Face rectangle
+    cv2.rectangle(
+        frame,
+        (x1, y1),
+        (x2, y2),
+        color,
+        3,
+    )
+
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.65
+    thickness = 2
+
+    (tw, th), _ = cv2.getTextSize(
+        text,
+        font,
+        font_scale,
+        thickness,
+    )
+
+    # Background
+    cv2.rectangle(
+        frame,
+        (x1, y1 - th - 12),
+        (x1 + tw + 12, y1),
+        color,
+        -1,
+    )
+
+    text_color = (0, 0, 0) if color == COLOR_VIP else (255, 255, 255)
+
     cv2.putText(
         frame,
         text,
-        (x1 + 5, y1 - 6),
-        cv2.FONT_HERSHEY_SIMPLEX,
-        0.6,
-        (0, 0, 0) if color == COLOR_VIP else (255, 255, 255),
-        2,
+        (x1 + 6, y1 - 6),
+        font,
+        font_scale,
+        text_color,
+        thickness,
+        cv2.LINE_AA,
     )
 
 

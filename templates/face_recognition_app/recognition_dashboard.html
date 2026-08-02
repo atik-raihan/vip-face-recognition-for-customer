@@ -1,40 +1,305 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-  <h2>Recognition Dashboard</h2>
 
-  <div class="row">
-    <div class="col-md-3"><div class="panel panel-primary"><div class="panel-body"><h3>{{ today_total }}</h3><p>Today Total</p></div></div></div>
-    <div class="col-md-3"><div class="panel panel-warning"><div class="panel-body"><h3>{{ today_vip }}</h3><p>VIP Visits</p></div></div></div>
-    <div class="col-md-3"><div class="panel panel-success"><div class="panel-body"><h3>{{ today_normal }}</h3><p>Normal Visits</p></div></div></div>
-    <div class="col-md-3"><div class="panel panel-default"><div class="panel-body"><h3>{{ today_unknown }}</h3><p>Unknown Faces</p></div></div></div>
-  </div>
+<div class="container-fluid">
 
-  <h3>Recent Recognitions</h3>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Customer</th>
-        <th>VIP</th>
-        <th>Confidence</th>
-        <th>Camera</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for log in recent_logs %}
-      <tr>
-        <td>{{ log.recognized_at|date:"Y-m-d H:i:s" }}</td>
-        <td>{% if log.customer %}{{ log.customer.name }}{% else %}Unknown{% endif %}</td>
-        <td>{% if log.was_vip_at_time %}YES{% else %}NO{% endif %}</td>
-        <td>{{ log.confidence|floatformat:2 }}</td>
-        <td>{{ log.camera.name|default:"Default" }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="5">No recognitions yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <h2>
+            <i class="fas fa-tachometer-alt"></i>
+            Recognition Dashboard
+        </h2>
+
+        <a href="{% url 'camera_wall' %}" class="btn btn-primary">
+            <i class="fas fa-video"></i>
+            Multiple Camera Monitoring
+        </a>
+
+    </div>
+
+    <!-- Statistics -->
+
+    <div class="row">
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="small-box bg-info">
+
+                <div class="inner">
+                    <h3>{{ total_recognitions }}</h3>
+                    <p>Today's Recognitions</p>
+                </div>
+
+                <div class="icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="small-box bg-success">
+
+                <div class="inner">
+                    <h3>{{ unique_customers }}</h3>
+                    <p>Unique Customers</p>
+                </div>
+
+                <div class="icon">
+                    <i class="fas fa-users"></i>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="small-box bg-warning">
+
+                <div class="inner">
+                    <h3>{{ vip_today }}</h3>
+                    <p>VIP Customers Today</p>
+                </div>
+
+                <div class="icon">
+                    <i class="fas fa-star"></i>
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="small-box bg-danger">
+
+                <div class="inner">
+                    <h3>{{ total_branches }}</h3>
+                    <p>Total Branches</p>
+                </div>
+
+                <div class="icon">
+                    <i class="fas fa-building"></i>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Camera Statistics -->
+
+    <div class="row">
+
+        <div class="col-lg-4">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h2>{{ total_cameras }}</h2>
+
+                    <h5>Total Cameras</h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h2 class="text-success">
+                        {{ active_cameras }}
+                    </h2>
+
+                    <h5>Active Cameras</h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <div class="card">
+
+                <div class="card-body text-center">
+
+                    <h2 class="text-danger">
+                        {{ offline_cameras }}
+                    </h2>
+
+                    <h5>Offline Cameras</h5>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Quick Actions -->
+
+    <div class="card">
+
+        <div class="card-header">
+
+            <h3 class="card-title">
+
+                Quick Access
+
+            </h3>
+
+        </div>
+
+        <div class="card-body">
+
+            <a href="{% url 'camera_wall' %}" class="btn btn-primary m-1">
+                <i class="fas fa-video"></i>
+                Camera Wall
+            </a>
+
+            <a href="{% url 'analytics_dashboard' %}" class="btn btn-success m-1">
+                <i class="fas fa-chart-line"></i>
+                Analytics
+            </a>
+
+            <a href="{% url 'attendance_dashboard' %}" class="btn btn-warning m-1">
+                <i class="fas fa-user-check"></i>
+                Attendance
+            </a>
+
+            <a href="{% url 'recognition_settings' %}" class="btn btn-secondary m-1">
+                <i class="fas fa-cogs"></i>
+                Settings
+            </a>
+
+        </div>
+
+    </div>
+
+    <!-- Recent Recognition -->
+
+    <div class="card">
+
+        <div class="card-header">
+
+            <h3 class="card-title">
+
+                Recent Recognition Logs
+
+            </h3>
+
+        </div>
+
+        <div class="card-body table-responsive">
+
+            <table class="table table-bordered table-hover">
+
+                <thead>
+
+                    <tr>
+
+                        <th>Time</th>
+                        <th>Customer</th>
+                        <th>VIP</th>
+                        <th>Confidence</th>
+                        <th>Camera</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    {% for log in recent_logs %}
+
+                    <tr>
+
+                        <td>
+                            {{ log.recognized_at|date:"Y-m-d H:i:s" }}
+                        </td>
+
+                        <td>
+
+                            {% if log.customer %}
+
+                                {{ log.customer.name }}
+
+                            {% else %}
+
+                                Unknown
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {% if log.was_vip_at_time %}
+
+                                <span class="badge badge-warning">
+                                    VIP
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-secondary">
+                                    Normal
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+
+                            {{ log.confidence|floatformat:2 }}
+
+                        </td>
+
+                        <td>
+
+                            {{ log.camera.name|default:"N/A" }}
+
+                        </td>
+
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+
+                        <td colspan="5" class="text-center">
+
+                            No recognition records available.
+
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
 </div>
+
 {% endblock %}
