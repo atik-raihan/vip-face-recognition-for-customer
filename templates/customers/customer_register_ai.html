@@ -1,0 +1,242 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-4">
+
+    <div class="row">
+
+        <div class="col-md-7">
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h3>AI Customer Registration</h3>
+                </div>
+
+                <div class="card-body">
+
+                    <img
+                        id="camera"
+                        src="/camera/video/"
+                        class="img-fluid rounded border"
+                    >
+
+                    <div class="text-center mt-4">
+                        <h2 id="status">
+                            Looking for face...
+                        </h2>
+                    </div>
+
+                    <div class="text-center">
+                        <h1
+                            id="countdown"
+                            style="font-size:80px;color:red;"
+                        ></h1>
+                    </div>
+
+                    <div class="text-center">
+                        <img
+                            id="preview"
+                            class="img-fluid"
+                            style="display:none;"
+                        >
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-5">
+
+            <div class="card">
+
+                <div class="card-header">
+                    Customer Information
+                </div>
+
+                <div class="card-body">
+
+                    <form id="customerForm">
+
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label>Name</label>
+                            <input
+                                class="form-control"
+                                name="name"
+                                required
+                            >
+                        </div>
+
+                        <div class="mb-3">
+                            <label>Phone</label>
+                            <input
+                                class="form-control"
+                                name="phone"
+                            >
+                        </div>
+
+                        <button
+                            id="saveButton"
+                            type="submit"
+                            class="btn btn-success w-100"
+                            disabled
+                        >
+                            Save Customer
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+let countdownRunning = false;
+let captured = false;
+let capturedImage = null;
+
+function checkFace(){
+
+    if(countdownRunning)
+        return;
+
+    fetch("/camera/registration/status/")
+    .then(r=>r.json())
+    .then(data=>{
+
+        if(data.status=="face_found"){
+
+            startCountdown();
+
+        }
+
+    });
+
+}
+
+setInterval(checkFace,700);
+
+function startCountdown(){
+
+    countdownRunning=true;
+
+    let n=3;
+
+    document.getElementById("status").innerHTML="✓ Face Found";
+    document.getElementById("countdown").innerHTML=n;
+
+    let timer=setInterval(function(){
+
+        n--;
+
+        if(n==0){
+
+            clearInterval(timer);
+
+            document.getElementById("countdown").innerHTML="";
+
+            captureImage();
+
+            return;
+
+        }
+
+        document.getElementById("countdown").innerHTML=n;
+
+    },1000);
+
+}
+
+function captureImage(){
+
+    fetch("/camera/registration/capture/")
+    .then(r=>r.json())
+    .then(data=>{
+
+        if(!data.success)
+            return;
+
+        captured = true;
+        capturedImage = data.image;
+
+        document.getElementById("status").innerHTML =
+            "✓ Captured Successfully";
+
+        document.getElementById("preview").style.display="block";
+        document.getElementById("preview").src=data.image;
+
+        document.getElementById("saveButton").disabled=false;
+
+        document.getElementsByName("name")[0].focus();
+
+    });
+
+}
+
+document.getElementsByName("phone")[0]
+.addEventListener("keydown",function(e){
+
+    if(e.key==="Enter"){
+
+        e.preventDefault();
+
+        document.getElementById("customerForm").requestSubmit();
+
+    }
+
+});
+
+document.getElementById("customerForm").onsubmit=function(e){
+
+    e.preventDefault();
+
+    if(!captured){
+
+        alert("Capture a face first.");
+
+        return;
+
+    }
+
+    let btn=document.getElementById("saveButton");
+
+    btn.disabled=true;
+    btn.innerHTML="Saving...";
+
+    let form=new FormData(this);
+
+    fetch("/camera/registration/save/",{
+
+        method:"POST",
+
+        body:form
+
+    })
+
+    .then(r=>r.json())
+
+    .then(data=>{
+
+        alert(data.message);
+
+        location.reload();
+
+    });
+
+};
+
+</script>
+
+{% endblock %}

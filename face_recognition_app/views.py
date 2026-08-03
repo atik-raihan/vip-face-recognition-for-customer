@@ -71,48 +71,44 @@ def video_feed(request):
 
 def latest_recognition(request):
     """
-    Polling endpoint for the POS page.
+    Polling endpoint for POS.
     """
 
     since_id = request.GET.get("since_id")
-    cutoff = timezone.now() - timedelta(
-        seconds=POS_RECOGNITION_FRESHNESS_SECONDS
-    )
 
-    qs = (
-        RecognitionLog.objects.filter(
-            customer__isnull=False,
-            recognized_at__gte=cutoff,
-        )
-        .select_related("customer")
-        .order_by("-recognized_at")
-    )
+    logs = RecognitionLog.objects.filter(
+        customer__isnull=False
+    ).select_related("customer")
 
     if since_id:
         try:
-            qs = qs.exclude(id__lte=int(since_id))
+            logs = logs.filter(id__gt=int(since_id))
         except (TypeError, ValueError):
             pass
 
-    log_entry = qs.first()
+    log = logs.order_by("-id").first()
 
-    if log_entry is None:
-        return JsonResponse({"new": False})
+    if log is None:
+        return JsonResponse({
+            "new": False
+        })
 
-    customer = log_entry.customer
+    customer = log.customer
 
-    return JsonResponse(
-        {
-            "new": True,
-            "log_id": log_entry.id,
-            "customer_id": customer.id,
-            "customer_name": customer.name,
-            "phone": customer.phone,
-            "is_vip": log_entry.was_vip_at_time,
-            "total_purchase": str(customer.total_purchase),
-            "confidence": log_entry.confidence,
-        }
-    )
+    return JsonResponse({
+
+        "new": True,
+        "log_id": log.id,
+
+        "customer_id": customer.id,
+        "customer_name": customer.name,
+        "phone": customer.phone,
+
+        "is_vip": log.was_vip_at_time,
+        "total_purchase": str(customer.total_purchase),
+        "confidence": log.confidence,
+
+    })
 
 
 def recognition_dashboard(request):

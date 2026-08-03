@@ -1,0 +1,119 @@
+body{
+    background:#f5f7fb;
+}
+
+.card{
+    border:none;
+    border-radius:12px;
+}
+
+.card-header{
+    background:#ffffff;
+    font-weight:600;
+}
+
+#camera-wrapper{
+    position:relative;
+    width:100%;
+}
+
+#camera-stream{
+    width:100%;
+    min-height:480px;
+    object-fit:cover;
+    border-radius:10px;
+    background:#000;
+}
+
+#captured-image{
+    width:100%;
+    border-radius:10px;
+}
+
+#overlay{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    pointer-events:none;
+}
+
+#face-box{
+    position:absolute;
+    border:4px solid #00ff66;
+    border-radius:10px;
+    display:none;
+    transition:.15s;
+}
+
+#status{
+    position:absolute;
+    left:50%;
+    transform:translateX(-50%);
+    bottom:110px;
+    background:rgba(0,0,0,.65);
+    color:white;
+    padding:12px 24px;
+    border-radius:50px;
+    font-size:22px;
+    font-weight:bold;
+}
+
+#countdown{
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:rgba(0,0,0,.55);
+    color:white;
+    font-size:72px;
+    font-weight:bold;
+    display:none;
+    justify-content:center;
+    align-items:center;
+}
+
+.success-message{
+    background:#198754 !important;
+}
+
+.warning-message{
+    background:#ffc107 !important;
+    color:#222 !important;
+}
+
+.error-message{
+    background:#dc3545 !important;
+}
+
+#save-btn{
+    font-size:18px;
+    padding:14px;
+}
+
+input,
+textarea{
+    font-size:16px !important;
+}
+
+@media(max-width:992px){
+
+    #camera-stream{
+        min-height:320px;
+    }
+
+    #status{
+        font-size:18px;
+    }
+
+    #countdown{
+        width:90px;
+        height:90px;
+        font-size:54px;
+    }
+
+}
