@@ -142,9 +142,26 @@ def _handle_recognition_event(frame, bbox, match, camera_obj):
         is_vip = match.get("vip", False)
         confidence = match["confidence"]
         dedupe_key = f"customer_{match['customer_id']}"
-    if not _should_log(dedupe_key):
-        return
+    from datetime import timedelta
 
+    cutoff = timezone.now() - timedelta(seconds=DEDUPE_WINDOW_SECONDS)
+
+    if customer_obj is not None:
+
+        already_logged = RecognitionLog.objects.filter(
+            customer=customer_obj,
+            recognized_at__gte=cutoff,
+        ).exists()
+
+    else:
+
+        already_logged = RecognitionLog.objects.filter(
+            customer__isnull=True,
+            recognized_at__gte=cutoff,
+        ).exists()
+
+    if already_logged:
+        return
     log_entry = RecognitionLog(
         customer=customer_obj,
         confidence=confidence,

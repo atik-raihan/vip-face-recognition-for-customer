@@ -421,48 +421,29 @@ opacity:1;
 
     function showWelcomeBackModal(data) {
 
-        document.getElementById(
-            "wb-customer-name"
-        ).innerHTML = data.customer_name;
+    document.getElementById("wb-customer-name").innerHTML =
+        data.customer_name;
 
-        document.getElementById(
-            "wb-total-purchase"
-        ).innerHTML =
-            "৳" + Number(data.total_purchase).toFixed(2);
+    document.getElementById("wb-total-purchase").innerHTML =
+        "৳" + Number(data.total_purchase).toFixed(2);
 
-        if (data.confidence != null) {
+    document.getElementById("wb-confidence").innerHTML =
+        "Recognition " + (Number(data.confidence) * 100).toFixed(1) + "%";
 
-            document.getElementById(
-                "wb-confidence"
-            ).innerHTML =
-                "Recognition " +
-                (Number(data.confidence) * 100).toFixed(1) +
-                "%";
+    document.getElementById("wb-vip-badge").style.display =
+        data.is_vip ? "block" : "none";
 
-        } else {
+    document.getElementById("welcome-back-modal").style.display = "flex";
 
-            document.getElementById(
-                "wb-confidence"
-            ).innerHTML = "";
+    clearTimeout(window.popupTimer);
 
-        }
+    window.popupTimer = setTimeout(function () {
 
-        document.getElementById(
-            "wb-vip-badge"
-        ).style.display =
-            data.is_vip ? "block" : "none";
+        document.getElementById("welcome-back-modal").style.display = "none";
 
-        document.getElementById(
-            "welcome-back-modal"
-        ).style.display = "flex";
+    }, 3000);
 
-        setTimeout(function () {
-
-            closeWelcomeBackModal();
-
-        }, 3000);
-
-    }
+}
 
     function autoSelectCustomer(customerId) {
 
@@ -490,36 +471,30 @@ opacity:1;
             let url = LATEST_RECOGNITION_URL;
 
             if (lastSeenLogId !== null) {
-
                 url += "?since_id=" + lastSeenLogId;
-
             }
-
-            alert("Polling server...");
 
             const response = await fetch(url);
 
-            if (!response.ok)
+            if (!response.ok) {
                 return;
+            }
 
             const data = await response.json();
 
-            if (!data.new)
+            if (!data.new) {
                 return;
+            }
 
             lastSeenLogId = data.log_id;
 
             autoSelectCustomer(data.customer_id);
 
-            alert("Recognition detected!");
-
             showWelcomeBackModal(data);
 
-        }
+        } catch (error) {
 
-        catch (error) {
-
-            console.log(error);
+            console.error(error);
 
         }
 
