@@ -180,5 +180,17 @@ urlpatterns = [
         views_branch.branch_delete,
         name="branch_delete",
     ),
-]
+
+    # Customer insights
+    path("customer/<int:customer_id>/visit-history/", views.customer_visit_history_page, name="customer_visit_history"),
+    path("api/customer/<int:customer_id>/visits/", views.customer_visit_history, name="api_customer_visits"),
+    path("api/customer/<int:customer_id>/recommendations/", views.customer_purchase_recommendations, name="api_customer_recommendations"),
+    path("api/pos/customer-search/", views.pos_customer_search, name="pos_customer_search"),
+
+    # Unknown visitors
+    path("unknown-visitors/", views.unknown_visitor_gallery, name="unknown_visitor_gallery"),
+    # Analytics
+    path("analytics/", views.analytics_dashboard, name="analytics_dashboard"),]
+
+
 

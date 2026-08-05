@@ -323,6 +323,19 @@ animation:popup .35s;
 
 <div style="font-size:55px;">👋</div>
 
+<img
+    id="wb-photo"
+    src=""
+    style="
+        width:120px;
+        height:120px;
+        border-radius:50%;
+        object-fit:cover;
+        border:4px solid #198754;
+        margin-bottom:15px;
+    "
+>
+
 <h2 style="margin-top:10px;">
 Welcome Back
 </h2>
@@ -407,7 +420,13 @@ opacity:1;
 
     const POLL_INTERVAL_MS = 3000;
 
-    let lastSeenLogId = null;
+    let lastSeenLogId = sessionStorage.getItem("lastRecognitionId");
+
+    if (lastSeenLogId) {
+        lastSeenLogId = parseInt(lastSeenLogId);
+    } else {
+        lastSeenLogId = null;
+    }
 
     function closeWelcomeBackModal() {
 
@@ -420,6 +439,10 @@ opacity:1;
     window.closeWelcomeBackModal = closeWelcomeBackModal;
 
     function showWelcomeBackModal(data) {
+
+    document.getElementById("wb-photo").src =
+        data.photo || "/static/images/default-user.png";
+    
 
     document.getElementById("wb-customer-name").innerHTML =
         data.customer_name;
@@ -476,17 +499,18 @@ opacity:1;
 
             const response = await fetch(url);
 
-            if (!response.ok) {
-                return;
-            }
+            if (!response.ok) return;
 
             const data = await response.json();
 
-            if (!data.new) {
-                return;
-            }
+            if (!data.new) return;
 
             lastSeenLogId = data.log_id;
+
+            sessionStorage.setItem(
+                "lastRecognitionId",
+                lastSeenLogId
+            );
 
             autoSelectCustomer(data.customer_id);
 

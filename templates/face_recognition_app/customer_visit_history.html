@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Customer Visit History{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>Visit History: {{ customer.name }}</h1>
+    <ol class="breadcrumb">
+      <li><a href="{% url 'dashboard' %}">Home</a></li>
+      <li><a href="{% url 'recognition_dashboard' %}">Dashboard</a></li>
+      <li class="active">Visit History</li>
+    </ol>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <div class="col-md-4">
+        <div class="box box-primary">
+          <div class="box-header">
+            <h3 class="box-title">Customer Info</h3>
+          </div>
+          <div class="box-body">
+            <p><strong>Name:</strong> {{ customer.name }}</p>
+            <p><strong>Phone:</strong> {{ customer.phone|default:"-" }}</p>
+            <p><strong>Total Purchase:</strong> BDT {{ customer.total_purchase|default:"0" }}</p>
+            <p><strong>VIP:</strong> {% if customer.is_vip or customer.vip %}<span class="label label-warning">Yes</span>{% else %}<span class="label label-default">No</span>{% endif %}</p>
+            <p><strong>Total Visits:</strong> <span class="badge bg-blue">{{ total_visits }}</span></p>
+          </div>
+        </div>
+
+        <div class="box box-warning">
+          <div class="box-header">
+            <h3 class="box-title">Frequently Buys</h3>
+          </div>
+          <div class="box-body">
+            {% if recommendations %}
+            <ul class="list-group">
+              {% for item in recommendations %}
+              <li class="list-group-item">
+                <span class="badge">{{ item.times_bought }}x</span>
+                {{ item.name }}
+                <small class="text-muted">(qty: {{ item.total_quantity }})</small>
+              </li>
+              {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted">No purchase history yet.</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-8">
+        <div class="box">
+          <div class="box-header">
+            <h3 class="box-title">Last 10 Visits</h3>
+          </div>
+          <div class="box-body table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Date & Time</th>
+                  <th>Camera</th>
+                  <th>Confidence</th>
+                  <th>Snapshot</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for visit in history %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>{{ visit.date }}</td>
+                  <td>{{ visit.camera }}</td>
+                  <td>{{ visit.confidence|default:"-" }}</td>
+                  <td>
+                    {% if visit.snapshot %}
+                    <a href="{{ visit.snapshot }}" target="_blank"><img src="{{ visit.snapshot }}" style="height: 40px; border-radius: 4px;"></a>
+                    {% else %}-{% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted">No visits recorded.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

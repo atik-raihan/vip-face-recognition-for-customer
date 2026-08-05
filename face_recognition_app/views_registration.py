@@ -1,4 +1,4 @@
-import base64
+﻿import base64
 import os
 import uuid
 
@@ -110,7 +110,7 @@ def registration_save(request):
 
     cv2.imwrite(filepath, frame)
 
-    customer.photo = f"customers/{filename}"
+    customer.image = f"customers/{filename}"
 
     customer.save()
 
