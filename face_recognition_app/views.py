@@ -3,6 +3,8 @@ from django.http import StreamingHttpResponse, Http404, JsonResponse
 from django.views.decorators.gzip import gzip_page
 from django.utils import timezone
 from datetime import timedelta
+from django.shortcuts import get_object_or_404
+from django.db import models
 
 from .camera.live_ai_camera import gen_frames
 from .models import RecognitionLog
