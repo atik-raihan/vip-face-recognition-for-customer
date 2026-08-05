@@ -36,7 +36,7 @@
                 <small class="text-muted">{{ log.recognized_at|date:"M d, H:i" }}</small><br>
                 <small>Camera: {{ log.camera_name|default:"Default" }}</small><br>
                 <small>Conf: {{ log.confidence|floatformat:2|default:"-" }}</small><br>
-                <a href="{% url 'customer_add' %}?from_unknown={{ log.id }}" class="btn btn-xs btn-success btn-block" style="margin-top: 5px;">
+                <a href="{% url 'add_customer' %}?from_unknown={{ log.id }}" class="btn btn-xs btn-success btn-block" style="margin-top: 5px;">
                   <i class="fa fa-plus"></i> Register
                 </a>
               </div>
