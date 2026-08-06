@@ -452,3 +452,61 @@ def analytics_dashboard(request):
         "top_customers": top_customers,
     }
     return render(request, "face_recognition_app/analytics_dashboard.html", context)
+
+# ============================================================
+# ENHANCED POLLING API - visit count, last visit, recommendations
+# ============================================================
+
+from django.db.models import Count, Sum
+
+
+@login_required
+def latest_recognition_enhanced(request):
+    since_id = request.GET.get("since_id")
+
+    qs = RecognitionLog.objects.select_related("customer", "camera")
+    if since_id:
+        qs = qs.filter(id__gt=since_id)
+
+    log = qs.order_by("-recognized_at").first()
+
+    if not log:
+        return JsonResponse({"new": False})
+
+    customer = log.customer
+    data = {
+        "new": True,
+        "log_id": log.id,
+        "customer_id": customer.id if customer else None,
+        "customer_name": customer.name if customer else "Unknown",
+        "photo": log.image_snapshot.url if log.image_snapshot else None,
+        "confidence": round(log.confidence, 2) if log.confidence else None,
+        "is_vip": log.was_vip_at_time,
+        "total_purchase": getattr(customer, "total_purchase", 0) if customer else 0,
+        "recognized_at": log.recognized_at.isoformat() if log.recognized_at else None,
+        "camera_name": log.camera_name or "Default",
+    }
+
+    if customer:
+        visit_count = RecognitionLog.objects.filter(customer=customer).count()
+        data["visit_count"] = visit_count
+        last_visit = RecognitionLog.objects.filter(customer=customer).exclude(id=log.id).order_by("-recognized_at").first()
+        data["last_visit"] = last_visit.recognized_at.isoformat() if last_visit else None
+
+        try:
+            from sales.models import SaleItem
+            frequent_items = (
+                SaleItem.objects.filter(sale__customer=customer)
+                .values("product__name")
+                .annotate(count=Count("id"))
+                .order_by("-count")[:3]
+            )
+            data["frequent_items"] = [item["product__name"] for item in frequent_items]
+        except Exception:
+            data["frequent_items"] = []
+    else:
+        data["visit_count"] = 0
+        data["last_visit"] = None
+        data["frequent_items"] = []
+
+    return JsonResponse(data)

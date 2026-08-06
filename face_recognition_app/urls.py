@@ -190,7 +190,11 @@ urlpatterns = [
     # Unknown visitors
     path("unknown-visitors/", views.unknown_visitor_gallery, name="unknown_visitor_gallery"),
     # Analytics
-    path("analytics/", views.analytics_dashboard, name="analytics_dashboard"),]
+    path("analytics/", views.analytics_dashboard, name="analytics_dashboard"),
+    # Enhanced polling API
+    path("latest-recognition-enhanced/", views.latest_recognition_enhanced, name="latest_recognition_enhanced"),
+    path("api/pos/customer-search/", views.pos_customer_search, name="pos_customer_search"),]
+
 
 
 

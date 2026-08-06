@@ -1,0 +1,162 @@
+<div id="welcome-back-modal">
+  <div class="wb-card">
+    <div class="wb-header">
+      <div class="wb-vip-crown" id="wb-crown" style="display:none;">[VIP]</div>
+      <h2>WELCOME BACK</h2>
+      <h3 class="wb-customer-name" id="wb-customer-name"></h3>
+    </div>
+    <div class="wb-body">
+      <img id="wb-snapshot" class="wb-snapshot" src="" alt="Snapshot" style="display:none;">
+      <div class="wb-confidence" id="wb-confidence"></div>
+      <div class="wb-stats">
+        <div class="wb-stat">
+          <div class="wb-stat-value" id="wb-total-purchase">0</div>
+          <div class="wb-stat-label">Total Purchase (BDT)</div>
+        </div>
+        <div class="wb-stat">
+          <div class="wb-stat-value" id="wb-visit-count">-</div>
+          <div class="wb-stat-label">Visit #</div>
+        </div>
+        <div class="wb-stat">
+          <div class="wb-stat-value" id="wb-last-visit">-</div>
+          <div class="wb-stat-label">Last Visit</div>
+        </div>
+      </div>
+      <div id="wb-recommendations" style="display:none; margin: 15px 0; padding: 10px; background: rgba(255,215,0,0.1); border-radius: 10px;">
+        <strong style="color:#ffd700;">Frequently Buys:</strong>
+        <span id="wb-frequent-items"></span>
+      </div>
+      <button class="wb-btn" onclick="closeWelcomeBackModal()">Continue</button>
+    </div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{% static 'sales/pos_popup.css' %}">
+
+<script>
+(function() {
+  var CUSTOMER_SELECT_ID = "customer";
+  var LATEST_RECOGNITION_URL = "/camera/latest-recognition/";
+  var POLL_INTERVAL_MS = 3000;
+  var lastSeenLogId = null;
+  var audioCtx = null;
+
+  function initAudio() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+
+  function playBeep() {
+    initAudio();
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.frequency.value = 800;
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.3);
+  }
+
+  function speakText(text) {
+    if ('speechSynthesis' in window) {
+      var utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.9;
+      utter.pitch = 1.1;
+      window.speechSynthesis.speak(utter);
+    }
+  }
+
+  function showBrowserNotify(title, body, icon) {
+    if ("Notification" in window && Notification.permission === "granted") {
+      new Notification(title, { body: body, icon: icon });
+    }
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return "First visit!";
+    var d = new Date(dateStr);
+    var now = new Date();
+    var diff = Math.floor((now - d) / (1000 * 60 * 60 * 24));
+    if (diff === 0) return "Today " + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    if (diff === 1) return "Yesterday";
+    return diff + " days ago";
+  }
+
+  function showWelcomeBackModal(data) {
+    document.getElementById("wb-customer-name").textContent = data.customer_name;
+    document.getElementById("wb-total-purchase").textContent = Number(data.total_purchase).toLocaleString();
+    document.getElementById("wb-confidence").textContent = data.confidence ? "Confidence: " + (data.confidence * 100).toFixed(0) + "%" : "";
+
+    var crown = document.getElementById("wb-crown");
+    crown.style.display = data.is_vip ? "block" : "none";
+
+    var snapshot = document.getElementById("wb-snapshot");
+    if (data.photo) {
+      snapshot.src = data.photo;
+      snapshot.style.display = "block";
+    } else {
+      snapshot.style.display = "none";
+    }
+
+    document.getElementById("wb-visit-count").textContent = data.visit_count || "-";
+    document.getElementById("wb-last-visit").textContent = formatDate(data.last_visit);
+
+    var recDiv = document.getElementById("wb-recommendations");
+    if (data.frequent_items && data.frequent_items.length > 0) {
+      document.getElementById("wb-frequent-items").textContent = data.frequent_items.join(", ");
+      recDiv.style.display = "block";
+    } else {
+      recDiv.style.display = "none";
+    }
+
+    document.getElementById("welcome-back-modal").classList.add("active");
+
+    playBeep();
+    if (data.is_vip) {
+      speakText("Welcome back, VIP customer " + data.customer_name);
+      showBrowserNotify("VIP Customer Entered", data.customer_name + " is here!", data.photo);
+    } else {
+      speakText("Welcome back, " + data.customer_name);
+    }
+
+    setTimeout(closeWelcomeBackModal, 5000);
+  }
+
+  window.closeWelcomeBackModal = function() {
+    document.getElementById("welcome-back-modal").classList.remove("active");
+  };
+
+  function autoSelectCustomer(customerId) {
+    var select = document.getElementById(CUSTOMER_SELECT_ID);
+    if (!select) return;
+    select.value = String(customerId);
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+
+  async function pollRecognition() {
+    try {
+      var url = new URL(LATEST_RECOGNITION_URL, window.location.origin);
+      if (lastSeenLogId) url.searchParams.set("since_id", lastSeenLogId);
+
+      var response = await fetch(url);
+      if (!response.ok) return;
+
+      var data = await response.json();
+      if (data.new) {
+        lastSeenLogId = data.log_id;
+        autoSelectCustomer(data.customer_id);
+        showWelcomeBackModal(data);
+      }
+    } catch (err) {
+      console.debug("Recognition poll failed:", err);
+    }
+  }
+
+  setInterval(pollRecognition, POLL_INTERVAL_MS);
+})();
+</script>
