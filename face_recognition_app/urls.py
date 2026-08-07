@@ -149,10 +149,10 @@ urlpatterns = [
     # Customer Auto Registration
     # ==========================================
 
-    path(
-        "",
-        include("face_recognition_app.urls_registration"),
-    ),
+    # path(
+    #     "",
+    #     include("face_recognition_app.urls_registration"),
+    # ),
     # ==========================================
     # Branches
     # ==========================================

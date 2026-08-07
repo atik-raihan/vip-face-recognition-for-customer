@@ -8,38 +8,26 @@
              alt="Logo"
              class="brand-image img-circle elevation-3"
              style="opacity:.8">
-
-        <span class="brand-text font-weight-light">
-            VIP Recognition
-        </span>
+        <span class="brand-text font-weight-light">VIP Recognition</span>
     </a>
 
     <div class="sidebar">
 
         <!-- User Panel -->
         <div class="user-panel mt-3 pb-3 mb-3 d-flex">
-
             <div class="image">
                 <img src="https://adminlte.io/themes/v3/dist/img/user2-160x160.jpg"
-                     class="img-circle elevation-2"
-                     alt="User">
+                     class="img-circle elevation-2" alt="User">
             </div>
-
             <div class="info">
-                <a href="/admin/" class="d-block">
-                    {{ request.user.username }}
-                </a>
+                <a href="/admin/" class="d-block">{{ request.user.username }}</a>
             </div>
-
         </div>
 
         <!-- Sidebar Menu -->
         <nav class="mt-2">
-
             <ul class="nav nav-pills nav-sidebar flex-column"
-                data-widget="treeview"
-                role="menu"
-                data-accordion="false">
+                data-widget="treeview" role="menu" data-accordion="false">
 
                 <!-- Recognition Dashboard -->
                 <li class="nav-item">
@@ -72,36 +60,12 @@
                         <p>Live Camera</p>
                     </a>
                 </li>
-                
-                <!-- Multiple Camera -->
-                <li class="nav-item">
-                    <a href="{% url 'camera_wall' %}" class="nav-link">
-                        <i class="nav-icon fas fa-th-large"></i>
-                        <p>Multiple Camera</p>
-                    </a>
-                </li>
-
-                <!-- Recognition Logs -->
-                <li class="nav-item">
-                    <a href="{% url 'recognition_dashboard' %}" class="nav-link">
-                        <i class="nav-icon fas fa-history"></i>
-                        <p>Recognition Logs</p>
-                    </a>
-                </li>
 
                 <!-- Customers -->
                 <li class="nav-item">
                     <a href="{% url 'customer_list' %}" class="nav-link">
                         <i class="nav-icon fas fa-users"></i>
                         <p>Customers</p>
-                    </a>
-                </li>
-
-                <!-- VIP Customers -->
-                <li class="nav-item">
-                    <a href="{% url 'customer_list' %}" class="nav-link">
-                        <i class="nav-icon fas fa-star"></i>
-                        <p>VIP Customers</p>
                     </a>
                 </li>
 
@@ -113,6 +77,15 @@
                     </a>
                 </li>
 
+                                <!-- Categories -->
+                <li class="nav-item">
+                    <a href="{% url 'category_list' %}" class="nav-link">
+                        <i class="nav-icon fas fa-tags"></i>
+                        <p>Categories</p>
+                    </a>
+                </li>
+
+                
                 <!-- Point of Sale -->
                 <li class="nav-item">
                     <a href="{% url 'pos' %}" class="nav-link">
@@ -186,7 +159,6 @@
                 </li>
 
             </ul>
-
         </nav>
 
     </div>

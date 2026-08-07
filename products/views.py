@@ -106,3 +106,66 @@ def delete_product(request, pk):
     product.delete()
 
     return redirect("product_list")
+
+def category_list(request):
+    """
+    Show all product categories:
+    - Valid categories from CATEGORY_CHOICES
+    - Actual categories used in database with counts
+    - Invalid categories (not in choices) highlighted
+    """
+    from django.db.models import Count
+
+    # Get valid choices from model
+    valid_choices = dict(Product.CATEGORY_CHOICES)
+    valid_keys = set(valid_choices.keys())
+
+    # Get actual categories from database with counts
+    db_categories = (
+        Product.objects.values('category')
+        .annotate(count=Count('id'))
+        .order_by('category')
+    )
+
+    categories_info = []
+    invalid_categories = []
+
+    for item in db_categories:
+        cat = item['category']
+        count = item['count']
+        is_valid = cat in valid_keys
+
+        info = {
+            'name': cat,
+            'display_name': valid_choices.get(cat, cat),
+            'count': count,
+            'is_valid': is_valid,
+        }
+
+        if is_valid:
+            categories_info.append(info)
+        else:
+            invalid_categories.append(info)
+
+    # Also show valid choices that have ZERO products
+    used_keys = {item['category'] for item in db_categories}
+    for key, display in valid_choices.items():
+        if key not in used_keys:
+            categories_info.append({
+                'name': key,
+                'display_name': display,
+                'count': 0,
+                'is_valid': True,
+            })
+
+    # Sort by display name
+    categories_info.sort(key=lambda x: x['display_name'])
+
+    total_products = Product.objects.count()
+
+    return render(request, "products/category_list.html", {
+        "categories": categories_info,
+        "invalid_categories": invalid_categories,
+        "valid_choices": list(valid_choices.items()),
+        "total_products": total_products,
+    })

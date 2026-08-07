@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Product Categories{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>Product Categories</h1>
+    <ol class="breadcrumb">
+      <li><a href="{% url 'dashboard' %}">Home</a></li>
+      <li class="active">Categories</li>
+    </ol>
+  </section>
+
+  <section class="content">
+    <!-- Summary Cards -->
+    <div class="row">
+      <div class="col-lg-4 col-xs-6">
+        <div class="small-box bg-aqua">
+          <div class="inner">
+            <h3>{{ total_products }}</h3>
+            <p>Total Products</p>
+          </div>
+          <div class="icon"><i class="fa fa-box"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-4 col-xs-6">
+        <div class="small-box bg-green">
+          <div class="inner">
+            <h3>{{ categories|length }}</h3>
+            <p>Valid Categories</p>
+          </div>
+          <div class="icon"><i class="fa fa-tags"></i></div>
+        </div>
+      </div>
+      <div class="col-lg-4 col-xs-6">
+        <div class="small-box bg-red">
+          <div class="inner">
+            <h3>{{ invalid_categories|length }}</h3>
+            <p>Invalid Categories</p>
+          </div>
+          <div class="icon"><i class="fa fa-exclamation-triangle"></i></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Valid Categories Table -->
+    <div class="row">
+      <div class="col-md-6">
+        <div class="box box-primary">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-tags"></i> Valid Categories</h3>
+          </div>
+          <div class="box-body table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Category</th>
+                  <th>Products</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in categories %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td><strong>{{ c.display_name }}</strong></td>
+                  <td>
+                    <span class="badge {% if c.count > 0 %}bg-blue{% else %}bg-gray{% endif %}">
+                      {{ c.count }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if c.count > 0 %}
+                      <span class="label label-success">Active</span>
+                    {% else %}
+                      <span class="label label-default">Empty</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No categories found.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invalid Categories -->
+      <div class="col-md-6">
+        <div class="box box-danger">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-exclamation-triangle"></i> Invalid Categories in DB</h3>
+          </div>
+          <div class="box-body">
+            {% if invalid_categories %}
+            <div class="alert alert-warning">
+              <i class="fa fa-warning"></i> These categories exist in the database but are <strong>not</strong> in the valid choices list.
+            </div>
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Invalid Name</th>
+                  <th>Products</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for c in invalid_categories %}
+                <tr class="bg-warning">
+                  <td><code>{{ c.name }}</code></td>
+                  <td><span class="badge bg-red">{{ c.count }}</span></td>
+                  <td><a href="{% url 'product_list' %}?q={{ c.name }}" class="btn btn-xs btn-primary">View Products</a></td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-success">
+              <i class="fa fa-check"></i> All categories are valid. No issues found.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Allowed Categories Reference -->
+        <div class="box box-info">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-info-circle"></i> Allowed Categories</h3>
+          </div>
+          <div class="box-body">
+            <p class="text-muted">These are the only values accepted by the form:</p>
+            <ul class="list-group">
+              {% for key, display in valid_choices %}
+              <li class="list-group-item">
+                <span class="badge bg-primary">{{ key }}</span>
+                {{ display }}
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

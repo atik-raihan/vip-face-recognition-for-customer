@@ -92,6 +92,10 @@ class RegistrationCamera:
 
             self.cap = None
 
+registration_camera = None
 
-registration_camera = RegistrationCamera()
-
+def get_registration_camera():
+    global registration_camera
+    if registration_camera is None:
+        registration_camera = RegistrationCamera()
+    return registration_camera

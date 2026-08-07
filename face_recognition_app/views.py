@@ -5,6 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.shortcuts import get_object_or_404
 from django.db import models
+from .utils import chart_to_base64
 
 from .camera.live_ai_camera import gen_frames
 from .models import RecognitionLog
@@ -450,9 +451,12 @@ def analytics_dashboard(request):
         "total_unknown_all_time": total_unknown_all_time,
         "vip_percentage": vip_percentage,
         "top_customers": top_customers,
+        # Matplotlib charts
+        "daily_chart": chart_to_base64(daily_labels, daily_total, daily_vip, "Daily (Last 7 Days)", "line"),
+        "weekly_chart": chart_to_base64(weekly_labels, weekly_total, weekly_vip, "Weekly (Last 4 Weeks)", "bar"),
+        "monthly_chart": chart_to_base64(monthly_labels, monthly_total, monthly_vip, "Monthly (Last 6 Months)", "bar"),
     }
     return render(request, "face_recognition_app/analytics_dashboard.html", context)
-
 # ============================================================
 # ENHANCED POLLING API - visit count, last visit, recommendations
 # ============================================================
