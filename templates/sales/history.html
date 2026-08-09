@@ -1,97 +1,60 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
+
+{% block title %}Sales History{% endblock %}
 
 {% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>Sales History</h1>
+    <ol class="breadcrumb">
+      <li><a href="{% url 'dashboard' %}">Home</a></li>
+      <li class="active">Sales History</li>
+    </ol>
+  </section>
 
-<div class="container-fluid">
-
-<div class="card">
-
-<div class="card-header bg-success text-white">
-
-<h3>Sales History</h3>
-
+  <section class="content">
+    <div class="box">
+      <div class="box-header">
+        <h3 class="box-title"><i class="fa fa-receipt"></i> All Sales</h3>
+      </div>
+      <div class="box-body table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Customer</th>
+              <th>Total</th>
+              <th>Items</th>
+              <th>Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sale in sales %}
+            <tr>
+              <td>{{ sale.id }}</td>
+              <td>
+                {% if sale.customer %}
+                  <a href="{% url 'customer_visit_history' sale.customer.id %}">{{ sale.customer.name }}</a>
+                  {% if sale.customer.is_vip %}<span class="label label-warning">VIP</span>{% endif %}
+                {% else %}
+                  <span class="text-muted"><i class="fa fa-user-slash"></i> Walk-in</span>
+                {% endif %}
+              </td>
+              <td><strong>{{ sale.total }}</strong></td>
+              <td>{{ sale.items.count }}</td>
+              <td>{{ sale.created_at|date:"Y-m-d H:i" }}</td>
+              <td><a href="{% url 'sale_detail' sale.id %}" class="btn btn-xs btn-primary"><i class="fa fa-eye"></i> View</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-muted">No sales yet.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 </div>
-
-<div class="card-body">
-
-<table class="table table-bordered table-hover">
-
-<thead>
-
-<tr>
-
-<th>#</th>
-<th>Customer</th>
-<th>Total</th>
-<th>Date</th>
-<th width="120">Action</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for sale in sales %}
-
-<tr>
-
-<td>{{ sale.id }}</td>
-
-<td>
-
-{{ sale.customer.name }}
-
-</td>
-
-<td>
-
-৳{{ sale.total }}
-
-</td>
-
-<td>
-
-{{ sale.created_at }}
-
-</td>
-
-<td>
-
-<a
-href="{% url 'sale_detail' sale.id %}"
-class="btn btn-primary btn-sm">
-
-View
-
-</a>
-
-</td>
-
-</tr>
-
-{% empty %}
-
-<tr>
-
-<td colspan="5">
-
-No sales found.
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
 {% endblock %}

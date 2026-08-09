@@ -22,5 +22,8 @@ urlpatterns = [
         views.sale_detail,
         name="sale_detail"
     ),
-
+    path(
+        "print/<int:pk>/", 
+        views.print_invoice, 
+        name="print_invoice"),
 ]

@@ -6,6 +6,7 @@
 
 <div class="container-fluid">
 
+    <!-- Header -->
     <div class="row mb-3">
         <div class="col-12">
             <div class="card bg-primary">
@@ -22,12 +23,12 @@
         </div>
     </div>
 
+    <!-- Stat Cards -->
     <div class="row">
-
         <div class="col-lg-3 col-6">
             <div class="small-box bg-info">
                 <div class="inner">
-                    <h3>{{ stats.total_customers }}</h3>
+                    <h3>{{ total_customers|default:"0" }}</h3>
                     <p>Total Customers</p>
                 </div>
                 <div class="icon">
@@ -39,7 +40,7 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>{{ stats.vip_customers }}</h3>
+                    <h3>{{ total_vip|default:"0" }}</h3>
                     <p>VIP Customers</p>
                 </div>
                 <div class="icon">
@@ -51,7 +52,7 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-warning">
                 <div class="inner">
-                    <h3>${{ stats.total_revenue }}</h3>
+                    <h3>${{ total_revenue|default:"0" }}</h3>
                     <p>Total Revenue</p>
                 </div>
                 <div class="icon">
@@ -63,7 +64,7 @@
         <div class="col-lg-3 col-6">
             <div class="small-box bg-danger">
                 <div class="inner">
-                    <h3>{{ stats.today_orders }}</h3>
+                    <h3>{{ todays_orders|default:"0" }}</h3>
                     <p>Today's Orders</p>
                 </div>
                 <div class="icon">
@@ -71,23 +72,28 @@
                 </div>
             </div>
         </div>
-
     </div>
 
+    <!-- Camera & VIP Status -->
     <div class="row">
-
         <div class="col-md-6">
             <div class="card">
-                <div class="card-header bg-success">
+                <div class="card-header {% if camera_status == 'ONLINE' %}bg-success{% else %}bg-secondary{% endif %}">
                     <h3 class="card-title">
                         <i class="fas fa-video"></i>
                         Camera Status
                     </h3>
                 </div>
                 <div class="card-body text-center">
-                    <i class="fas fa-video fa-4x text-success mb-3"></i>
-                    <h3>ONLINE</h3>
-                    <p>Face Recognition Service is Running</p>
+                    <i class="fas fa-video fa-4x {% if camera_status == 'ONLINE' %}text-success{% else %}text-muted{% endif %} mb-3"></i>
+                    <h3>{{ camera_status }}</h3>
+                    <p>
+                        {% if camera_status == 'ONLINE' %}
+                            Face Recognition Service is Running
+                        {% else %}
+                            Face Recognition Service is Offline
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
@@ -101,20 +107,26 @@
                     </h3>
                 </div>
                 <div class="card-body">
-                    <h4>No VIP detected yet</h4>
-                    <p>Waiting for camera recognition...</p>
+                    {% if last_vip %}
+                        <h4>{{ last_vip.customer.name }}</h4>
+                        <p>Detected at {{ last_vip.recognized_at|date:"Y-m-d H:i" }}</p>
+                        <span class="badge badge-warning">VIP</span>
+                    {% else %}
+                        <h4>No VIP detected yet</h4>
+                        <p>Waiting for camera recognition...</p>
+                    {% endif %}
                 </div>
             </div>
         </div>
-
     </div>
 
+    <!-- Recent Transactions -->
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Recent Transactions</h3>
         </div>
-        <div class="card-body">
-            <table class="table table-bordered">
+        <div class="card-body table-responsive">
+            <table class="table table-bordered table-hover">
                 <thead>
                     <tr>
                         <th>Invoice</th>
@@ -124,134 +136,28 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for sale in recent_sales %}
                     <tr>
-                        <td>#1001</td>
-                        <td>John Doe</td>
-                        <td>$250</td>
+                        <td>#{{ sale.id }}</td>
+                        <td>
+                            {% if sale.customer %}
+                                {{ sale.customer.name }}
+                                {% if sale.customer.is_vip %}<span class="badge badge-warning">VIP</span>{% endif %}
+                            {% else %}
+                                <span class="text-muted"><i class="fas fa-user-slash"></i> Walk-in</span>
+                            {% endif %}
+                        </td>
+                        <td>${{ sale.total }}</td>
                         <td><span class="badge badge-success">Completed</span></td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td>#1002</td>
-                        <td>Jane Smith</td>
-                        <td>$180</td>
-                        <td><span class="badge badge-success">Completed</span></td>
+                        <td colspan="4" class="text-center text-muted">No sales yet.</td>
                     </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
-    </div>
-
-</div>
-
-<div class="row">
-
-    <div class="col-md-6">
-
-        <div class="card">
-
-            <div class="card-header bg-success">
-                <h3 class="card-title">
-                    <i class="fas fa-video"></i>
-                    Camera Status
-                </h3>
-            </div>
-
-            <div class="card-body text-center">
-
-                <i class="fas fa-video fa-4x text-success mb-3"></i>
-
-                <h3>ONLINE</h3>
-
-                <p>Face Recognition Service is Running</p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="col-md-6">
-
-        <div class="card">
-
-            <div class="card-header bg-warning">
-                <h3 class="card-title">
-                    <i class="fas fa-star"></i>
-                    Last VIP Detection
-                </h3>
-            </div>
-
-            <div class="card-body">
-
-                <h4>No VIP detected yet</h4>
-
-                <p>Waiting for camera recognition...</p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-<div class="card">
-
-    <div class="card-header">
-        <h3 class="card-title">
-            Recent Transactions
-        </h3>
-    </div>
-
-    <div class="card-body">
-
-        <table class="table table-bordered">
-
-            <thead>
-
-                <tr>
-
-                    <th>Invoice</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                <tr>
-
-                    <td>#1001</td>
-                    <td>John Doe</td>
-                    <td>$250</td>
-                    <td>
-                        <span class="badge badge-success">
-                            Completed
-                        </span>
-                    </td>
-
-                </tr>
-
-                <tr>
-
-                    <td>#1002</td>
-                    <td>Jane Smith</td>
-                    <td>$180</td>
-                    <td>
-                        <span class="badge badge-success">
-                            Completed
-                        </span>
-                    </td>
-
-                </tr>
-
-            </tbody>
-
-        </table>
-
     </div>
 
 </div>

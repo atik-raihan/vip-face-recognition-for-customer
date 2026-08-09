@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Invoice #{{ sale.id }}</title>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; margin: 0; padding: 10px; }
+        }
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 40px 20px;
+            margin: 0;
+        }
+        .invoice-box {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+        .header h1 { margin: 0; color: #007bff; font-size: 28px; }
+        .header p { margin: 5px 0 0; color: #666; font-size: 14px; }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+        .info-row strong { color: #333; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background: #f8f9fa; font-weight: 600; }
+        .text-right { text-align: right; }
+        .total-row {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: right;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #007bff;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #888;
+            font-size: 12px;
+        }
+        .btn-bar {
+            text-align: center;
+            margin: 25px 0;
+        }
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+        }
+        .btn-print {
+            background: #28a745;
+            color: white;
+        }
+        .btn-close {
+            background: #6c757d;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="invoice-box">
+        <div class="header">
+            <h1>VIP Recognition</h1>
+            <p>AI-powered Face Recognition & POS</p>
+        </div>
+
+        <div class="info-row">
+            <span><strong>Invoice:</strong> #{{ sale.id }}</span>
+            <span><strong>Date:</strong> {{ now|date:"Y-m-d H:i" }}</span>
+        </div>
+
+        <div class="info-row">
+            <span>
+                <strong>Customer:</strong>
+                {% if sale.customer %}
+                    {{ sale.customer.name }}
+                    {% if sale.customer.is_vip %}<span style="color:#ffc107;">★ VIP</span>{% endif %}
+                {% else %}
+                    Walk-in
+                {% endif %}
+            </span>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th class="text-right">Qty</th>
+                    <th class="text-right">Price</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.product.name }}</td>
+                    <td class="text-right">{{ item.quantity }}</td>
+                    <td class="text-right">{{ item.price }}</td>
+                    <td class="text-right">{{ item.subtotal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="total-row">
+            Grand Total: ${{ sale.total }}
+        </div>
+
+        <div class="footer">
+            Thank you for your business!<br>
+            Printed on {{ now|date:"Y-m-d H:i" }}
+        </div>
+
+        <div class="btn-bar no-print">
+            <button class="btn btn-print" onclick="window.print()">
+                <i class="fa fa-print"></i> Print Invoice
+            </button>
+            <a href="{% url 'pos' %}" class="btn btn-close">New Sale</a>
+            <a href="{% url 'sales_history' %}" class="btn btn-close">Sales History</a>
+        </div>
+    </div>
+
+    <script>
+        // Auto-trigger print after page loads
+        window.onload = function() {
+            setTimeout(function() {
+                window.print();
+            }, 500);
+        };
+    </script>
+
+</body>
+</html>

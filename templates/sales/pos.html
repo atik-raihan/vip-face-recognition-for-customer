@@ -1,538 +1,271 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
+
+{% block title %}Point of Sale{% endblock %}
 
 {% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1>Point of Sale</h1>
+    <ol class="breadcrumb">
+      <li><a href="{% url 'dashboard' %}">Home</a></li>
+      <li class="active">POS</li>
+    </ol>
+  </section>
 
-<div class="container-fluid">
-
-    <div class="card">
-
-        <div class="card-header bg-primary text-white">
-            <h3>Point of Sale (POS)</h3>
+  <section class="content">
+    <div class="row">
+      <!-- Left: Product Selection -->
+      <div class="col-md-7">
+        <div class="box box-primary">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-barcode"></i> Scan or Select Product</h3>
+          </div>
+          <div class="box-body">
+            <div class="form-group">
+              <input type="text" id="barcode-input" class="form-control" placeholder="Scan barcode or type product name..." autofocus>
+            </div>
+          </div>
         </div>
 
-        <div class="card-body">
+        <div class="box">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-list"></i> Product List</h3>
+          </div>
+          <div class="box-body table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Price</th>
+                  <th>Stock</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for product in products %}
+                <tr>
+                  <td>{{ product.name }}</td>
+                  <td>{{ product.price }}</td>
+                  <td><span class="badge {% if product.stock == 0 %}bg-red{% elif product.stock <= 5 %}bg-yellow{% else %}bg-green{% endif %}">{{ product.stock }}</span></td>
+                  <td>
+                    <button type="button" class="btn btn-xs btn-primary add-to-cart" data-id="{{ product.id }}" data-name="{{ product.name }}" data-price="{{ product.price }}" data-stock="{{ product.stock }}">
+                      <i class="fa fa-plus"></i> Add
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
-            <form method="POST">
+      <!-- Right: Cart & Checkout -->
+      <div class="col-md-5">
+        <div class="box box-success">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-shopping-cart"></i> Cart</h3>
+          </div>
+          <div class="box-body">
+            <table class="table" id="cart-table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Price</th>
+                  <th>Total</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="cart-body">
+                <tr id="empty-cart">
+                  <td colspan="5" class="text-center text-muted">Cart is empty</td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr>
+                  <th colspan="3">Grand Total</th>
+                  <th id="grand-total">0.00</th>
+                  <th></th>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
 
-                {% csrf_token %}
+        <div class="box box-info">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-user"></i> Customer (Optional)</h3>
+          </div>
+          <div class="box-body">
+            <form id="sale-form" method="post" action="{% url 'pos' %}">
+              {% csrf_token %}
+              <input type="hidden" name="items" id="items-input" value="[]">
 
-                <div class="row mb-3">
+              <div class="form-group">
+                <label>Select Customer</label>
+                <select name="customer" id="customer-select" class="form-control">
+                  <option value="">-- Walk-in (No Customer) --</option>
+                  {% for customer in customers %}
+                  <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.phone }})</option>
+                  {% endfor %}
+                </select>
+                <small class="text-muted">Leave empty for walk-in sales</small>
+              </div>
 
-                    <div class="col-md-6">
-
-                        <label>Customer</label>
-
-                        <select
-                            name="customer"
-                            id="customer"
-                            class="form-control">
-
-                            {% for customer in customers %}
-
-                            <option value="{{ customer.id }}">
-                                {{ customer.name }} - {{ customer.phone }}
-                            </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-                    <div class="col-md-4">
-
-                        <label>Product</label>
-
-                        <select
-                            id="product"
-                            class="form-control">
-
-                            <option value="">Select Product</option>
-
-                            {% for product in products %}
-
-                            <option value="{{ product.id }}">
-                                {{ product.name }} - ৳{{ product.price }}
-                            </option>
-
-                            {% endfor %}
-
-                        </select>
-
-                    </div>
-
-                    <div class="col-md-2">
-
-                        <label>&nbsp;</label>
-
-                        <button
-                            type="button"
-                            onclick="addProduct()"
-                            class="btn btn-success w-100">
-
-                            Add
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-                <input
-                    type="hidden"
-                    name="items"
-                    id="items">
-
-                <table class="table table-bordered">
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Product</th>
-                            <th>Price</th>
-                            <th width="180">Quantity</th>
-                            <th>Subtotal</th>
-                            <th width="120">Action</th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody id="cart">
-
-                    </tbody>
-
-                </table>
-
-                <h3 class="text-end">
-
-                    Total:
-                    ৳<span id="total">0.00</span>
-
-                </h3>
-
-                <button class="btn btn-primary">
-
-                    Complete Sale
-
-                </button>
-
+              <button type="submit" class="btn btn-success btn-block btn-lg" id="checkout-btn">
+                <i class="fa fa-check"></i> Complete Sale
+              </button>
             </form>
-
+          </div>
         </div>
-
+      </div>
     </div>
-
+  </section>
 </div>
 
 <script>
+var cart = [];
 
-let cart = [];
+function updateCart() {
+    var tbody = document.getElementById('cart-body');
+    var grandTotalEl = document.getElementById('grand-total');
+    var itemsInput = document.getElementById('items-input');
 
-function renderCart(){
+    if (cart.length === 0) {
+        tbody.innerHTML = '<tr id="empty-cart"><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>';
+        grandTotalEl.textContent = '0.00';
+        itemsInput.value = '[]';
+        return;
+    }
 
-    let html = "";
-    let total = 0;
+    var html = '';
+    var grandTotal = 0;
 
-    cart.forEach((item,index)=>{
+    for (var i = 0; i < cart.length; i++) {
+        var item = cart[i];
+        var total = item.price * item.qty;
+        grandTotal += total;
+        html += '<tr>' +
+            '<td>' + item.name + '</td>' +
+            '<td><input type="number" class="form-control qty-input" data-index="' + i + '" value="' + item.qty + '" min="1" max="' + item.stock + '" style="width:60px;"></td>' +
+            '<td>' + item.price.toFixed(2) + '</td>' +
+            '<td>' + total.toFixed(2) + '</td>' +
+            '<td><button type="button" class="btn btn-xs btn-danger remove-item" data-index="' + i + '"><i class="fa fa-trash"></i></button></td>' +
+            '</tr>';
+    }
 
-        let subtotal = item.price * item.qty;
+    tbody.innerHTML = html;
+    grandTotalEl.textContent = grandTotal.toFixed(2);
 
-        total += subtotal;
-
-        html += `
-        <tr>
-
-            <td>${item.name}</td>
-
-            <td>৳${item.price.toFixed(2)}</td>
-
-            <td>
-
-                <button
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    onclick="decrease(${index})">
-
-                    -
-
-                </button>
-
-                <span class="mx-2">${item.qty}</span>
-
-                <button
-                    type="button"
-                    class="btn btn-success btn-sm"
-                    onclick="increase(${index})">
-
-                    +
-
-                </button>
-
-            </td>
-
-            <td>৳${subtotal.toFixed(2)}</td>
-
-            <td>
-
-                <button
-                    type="button"
-                    class="btn btn-danger btn-sm"
-                    onclick="removeItem(${index})">
-
-                    Remove
-
-                </button>
-
-            </td>
-
-        </tr>
-        `;
-
-    });
-
-    document.getElementById("cart").innerHTML = html;
-
-    document.getElementById("total").innerHTML = total.toFixed(2);
-
-    document.getElementById("items").value = JSON.stringify(
-
-        cart.map(item => ({
-            id: item.id,
-            qty: item.qty
-        }))
-
-    );
-
+    var itemsForServer = [];
+    for (var j = 0; j < cart.length; j++) {
+        itemsForServer.push({id: cart[j].id, qty: cart[j].qty});
+    }
+    itemsInput.value = JSON.stringify(itemsForServer);
 }
 
-function addProduct(){
+document.addEventListener('click', function(e) {
+    var addBtn = e.target.closest('.add-to-cart');
+    if (addBtn) {
+        var id = addBtn.getAttribute('data-id');
+        var name = addBtn.getAttribute('data-name');
+        var price = parseFloat(addBtn.getAttribute('data-price'));
+        var stock = parseInt(addBtn.getAttribute('data-stock'));
 
-    let id = document.getElementById("product").value;
+        var existing = null;
+        for (var k = 0; k < cart.length; k++) {
+            if (cart[k].id === id) {
+                existing = cart[k];
+                break;
+            }
+        }
 
-    if(id=="") return;
-
-    fetch("/pos/product/?id="+id)
-
-    .then(response => response.json())
-
-    .then(data => {
-
-        let existing = cart.find(item => item.id == data.id);
-
-        if(existing){
-
-            if(existing.qty < data.stock){
-
+        if (existing) {
+            if (existing.qty < stock) {
                 existing.qty++;
-
-            }else{
-
-                alert("Not enough stock!");
-
+            } else {
+                alert('Not enough stock!');
             }
+        } else {
+            cart.push({id: id, name: name, price: price, qty: 1, stock: stock});
+        }
+        updateCart();
+        return;
+    }
 
-        }else{
+    var removeBtn = e.target.closest('.remove-item');
+    if (removeBtn) {
+        var idx = parseInt(removeBtn.getAttribute('data-index'));
+        cart.splice(idx, 1);
+        updateCart();
+    }
+});
 
-            cart.push({
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('qty-input')) {
+        var idx = parseInt(e.target.getAttribute('data-index'));
+        var newQty = parseInt(e.target.value);
+        if (newQty > 0 && newQty <= cart[idx].stock) {
+            cart[idx].qty = newQty;
+        } else {
+            alert('Invalid quantity or not enough stock!');
+            e.target.value = cart[idx].qty;
+        }
+        updateCart();
+    }
+});
 
-                id: data.id,
-                name: data.name,
-                price: data.price,
-                qty: 1,
-                stock: data.stock
+document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var barcode = this.value.trim();
+        if (!barcode) return;
 
+        fetch('/pos/get-product/?barcode=' + encodeURIComponent(barcode))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    var existing = null;
+                    for (var k = 0; k < cart.length; k++) {
+                        if (cart[k].id == data.id) {
+                            existing = cart[k];
+                            break;
+                        }
+                    }
+
+                    if (existing) {
+                        if (existing.qty < data.stock) {
+                            existing.qty++;
+                        } else {
+                            alert('Not enough stock!');
+                        }
+                    } else {
+                        cart.push({
+                            id: String(data.id),
+                            name: data.name,
+                            price: data.price,
+                            qty: 1,
+                            stock: data.stock
+                        });
+                    }
+                    updateCart();
+                    document.getElementById('barcode-input').value = '';
+                } else {
+                    alert('Product not found!');
+                }
             });
-
-        }
-
-        renderCart();
-
-    });
-
-}
-
-function increase(index){
-
-    if(cart[index].qty < cart[index].stock){
-
-        cart[index].qty++;
-
-        renderCart();
-
-    }else{
-
-        alert("Stock limit reached!");
-
     }
+});
 
-}
-
-function decrease(index){
-
-    cart[index].qty--;
-
-    if(cart[index].qty <= 0){
-
-        cart.splice(index,1);
-
+// VALIDATE BEFORE SUBMIT
+document.getElementById('sale-form').addEventListener('submit', function(e) {
+    if (cart.length === 0) {
+        e.preventDefault();
+        alert('Please add at least one product to the cart.');
+        return false;
     }
-
-    renderCart();
-
-}
-
-function removeItem(index){
-
-    cart.splice(index,1);
-
-    renderCart();
-
-}
-
+    updateCart(); // Ensure latest data is in hidden input
+});
 </script>
-
-
-<!-- ============================================================ -->
-<!-- AI RECOGNITION: Welcome Back modal + auto-select customer     -->
-<!-- ============================================================ -->
-
-<div id="welcome-back-modal" style="
-display:none;
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:rgba(0,0,0,.65);
-z-index:9999;
-justify-content:center;
-align-items:center;
-">
-
-<div style="
-background:white;
-width:430px;
-border-radius:18px;
-padding:35px;
-text-align:center;
-box-shadow:0 15px 40px rgba(0,0,0,.35);
-animation:popup .35s;
-">
-
-<div style="font-size:55px;">👋</div>
-
-<img
-    id="wb-photo"
-    src=""
-    style="
-        width:120px;
-        height:120px;
-        border-radius:50%;
-        object-fit:cover;
-        border:4px solid #198754;
-        margin-bottom:15px;
-    "
->
-
-<h2 style="margin-top:10px;">
-Welcome Back
-</h2>
-
-<h1
-id="wb-customer-name"
-style="
-margin-top:10px;
-font-size:36px;
-font-weight:bold;
-color:#222;
-">
-</h1>
-
-<div
-id="wb-vip-badge"
-style="
-display:none;
-font-size:20px;
-font-weight:bold;
-color:#d4a017;
-margin-top:10px;
-">
-👑 VIP CUSTOMER
-</div>
-
-<hr>
-
-<div style="font-size:18px;color:#666;">
-Total Purchase
-</div>
-
-<div
-id="wb-total-purchase"
-style="
-font-size:40px;
-font-weight:bold;
-color:#198754;
-margin-top:8px;
-">
-</div>
-
-<div
-id="wb-confidence"
-style="
-margin-top:18px;
-color:#888;
-">
-</div>
-
-</div>
-
-</div>
-
-<style>
-
-@keyframes popup{
-
-0%{
-
-transform:scale(.6);
-opacity:0;
-
-}
-
-100%{
-
-transform:scale(1);
-opacity:1;
-
-}
-
-}
-
-</style>
-
-<script>
-(function () {
-
-    const CUSTOMER_SELECT_ID = "customer";
-    const LATEST_RECOGNITION_URL = "/camera/latest-recognition/";
-
-    const POLL_INTERVAL_MS = 3000;
-
-    let lastSeenLogId = sessionStorage.getItem("lastRecognitionId");
-
-    if (lastSeenLogId) {
-        lastSeenLogId = parseInt(lastSeenLogId);
-    } else {
-        lastSeenLogId = null;
-    }
-
-    function closeWelcomeBackModal() {
-
-        document.getElementById(
-            "welcome-back-modal"
-        ).style.display = "none";
-
-    }
-
-    window.closeWelcomeBackModal = closeWelcomeBackModal;
-
-    function showWelcomeBackModal(data) {
-
-    document.getElementById("wb-photo").src =
-        data.photo || "/static/images/default-user.png";
-    
-
-    document.getElementById("wb-customer-name").innerHTML =
-        data.customer_name;
-
-    document.getElementById("wb-total-purchase").innerHTML =
-        "৳" + Number(data.total_purchase).toFixed(2);
-
-    document.getElementById("wb-confidence").innerHTML =
-        "Recognition " + (Number(data.confidence) * 100).toFixed(1) + "%";
-
-    document.getElementById("wb-vip-badge").style.display =
-        data.is_vip ? "block" : "none";
-
-    document.getElementById("welcome-back-modal").style.display = "flex";
-
-    clearTimeout(window.popupTimer);
-
-    window.popupTimer = setTimeout(function () {
-
-        document.getElementById("welcome-back-modal").style.display = "none";
-
-    }, 3000);
-
-}
-
-    function autoSelectCustomer(customerId) {
-
-        const select = document.getElementById(
-            CUSTOMER_SELECT_ID
-        );
-
-        if (!select)
-            return;
-
-        select.value = customerId;
-
-        select.dispatchEvent(
-            new Event("change", {
-                bubbles: true
-            })
-        );
-
-    }
-
-    async function pollRecognition() {
-
-        try {
-
-            let url = LATEST_RECOGNITION_URL;
-
-            if (lastSeenLogId !== null) {
-                url += "?since_id=" + lastSeenLogId;
-            }
-
-            const response = await fetch(url);
-
-            if (!response.ok) return;
-
-            const data = await response.json();
-
-            if (!data.new) return;
-
-            lastSeenLogId = data.log_id;
-
-            sessionStorage.setItem(
-                "lastRecognitionId",
-                lastSeenLogId
-            );
-
-            autoSelectCustomer(data.customer_id);
-
-            showWelcomeBackModal(data);
-
-        } catch (error) {
-
-            console.error(error);
-
-        }
-
-    }
-
-    pollRecognition();
-
-    setInterval(
-        pollRecognition,
-        POLL_INTERVAL_MS
-    );
-
-})();
-
-</script>
-
 {% endblock %}
