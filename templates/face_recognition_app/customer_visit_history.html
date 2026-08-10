@@ -1,90 +1,194 @@
 {% extends "base.html" %}
 
-{% block title %}Customer Visit History{% endblock %}
+{% block title %}{{ customer.name }} - Visit History{% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
   <section class="content-header">
-    <h1>Visit History: {{ customer.name }}</h1>
+    <h1>
+      <i class="fa fa-user-clock"></i> Customer Visit History
+    </h1>
     <ol class="breadcrumb">
       <li><a href="{% url 'dashboard' %}">Home</a></li>
-      <li><a href="{% url 'recognition_dashboard' %}">Dashboard</a></li>
-      <li class="active">Visit History</li>
+      <li><a href="{% url 'customer_list' %}">Customers</a></li>
+      <li class="active">{{ customer.name }}</li>
     </ol>
   </section>
 
   <section class="content">
     <div class="row">
+      <!-- Customer Profile Card -->
       <div class="col-md-4">
         <div class="box box-primary">
-          <div class="box-header">
-            <h3 class="box-title">Customer Info</h3>
-          </div>
-          <div class="box-body">
-            <p><strong>Name:</strong> {{ customer.name }}</p>
-            <p><strong>Phone:</strong> {{ customer.phone|default:"-" }}</p>
-            <p><strong>Total Purchase:</strong> BDT {{ customer.total_purchase|default:"0" }}</p>
-            <p><strong>VIP:</strong> {% if customer.is_vip or customer.vip %}<span class="label label-warning">Yes</span>{% else %}<span class="label label-default">No</span>{% endif %}</p>
-            <p><strong>Total Visits:</strong> <span class="badge bg-blue">{{ total_visits }}</span></p>
+          <div class="box-body box-profile text-center">
+            {% if customer.image %}
+              <img class="profile-user-img img-responsive img-circle" src="{{ customer.image.url }}" alt="{{ customer.name }}" style="width:120px; height:120px; object-fit:cover;">
+            {% else %}
+              <img class="profile-user-img img-responsive img-circle" src="https://adminlte.io/themes/v3/dist/img/user4-128x128.jpg" alt="No photo" style="width:120px; height:120px;">
+            {% endif %}
+
+            <h3 class="profile-username text-center">
+              {{ customer.name }}
+              {% if customer.is_vip %}
+                <span class="label label-warning"><i class="fa fa-star"></i> VIP</span>
+              {% endif %}
+            </h3>
+            <p class="text-muted text-center">{{ customer.phone|default:"No phone" }}</p>
+
+            <ul class="list-group list-group-unbordered">
+              <li class="list-group-item">
+                <b>Total Visits</b> <span class="pull-right badge bg-blue">{{ total_visits }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Total Purchase</b> <span class="pull-right badge bg-green">BDT {{ customer.total_purchase|default:"0" }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Email</b> <span class="pull-right">{{ customer.email|default:"-" }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Address</b> <span class="pull-right">{{ customer.address|default:"-" }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Member Since</b> <span class="pull-right">{{ customer.created_at|date:"M d, Y" }}</span>
+              </li>
+            </ul>
+
+            <a href="{% url 'edit_customer' customer.id %}" class="btn btn-primary btn-block">
+              <i class="fa fa-edit"></i> Edit Customer
+            </a>
+            <a href="{% url 'customer_list' %}" class="btn btn-default btn-block">
+              <i class="fa fa-arrow-left"></i> Back to Customers
+            </a>
           </div>
         </div>
 
+        <!-- Purchase Recommendations -->
+        {% if recommendations %}
         <div class="box box-warning">
-          <div class="box-header">
-            <h3 class="box-title">Frequently Buys</h3>
+          <div class="box-header with-border">
+            <h3 class="box-title"><i class="fa fa-lightbulb-o"></i> Frequently Bought</h3>
           </div>
           <div class="box-body">
-            {% if recommendations %}
-            <ul class="list-group">
-              {% for item in recommendations %}
-              <li class="list-group-item">
-                <span class="badge">{{ item.times_bought }}x</span>
-                {{ item.name }}
-                <small class="text-muted">(qty: {{ item.total_quantity }})</small>
+            <ul class="products-list product-list-in-box">
+              {% for rec in recommendations %}
+              <li class="item">
+                <div class="product-info">
+                  <span class="product-title">{{ rec.name }}</span>
+                  <span class="product-description">
+                    Bought {{ rec.times_bought }} time{{ rec.times_bought|pluralize }} (Qty: {{ rec.total_quantity }})
+                  </span>
+                </div>
               </li>
               {% endfor %}
             </ul>
-            {% else %}
-            <p class="text-muted">No purchase history yet.</p>
-            {% endif %}
           </div>
         </div>
+        {% endif %}
       </div>
 
+      <!-- Visit History Timeline -->
       <div class="col-md-8">
         <div class="box">
           <div class="box-header">
-            <h3 class="box-title">Last 10 Visits</h3>
+            <h3 class="box-title"><i class="fa fa-history"></i> Recent Visits</h3>
+            <div class="box-tools">
+              <span class="label label-primary">{{ history|length }} of {{ total_visits }} visits shown</span>
+            </div>
           </div>
-          <div class="box-body table-responsive">
+          <div class="box-body">
+            {% if history %}
             <table class="table table-hover">
               <thead>
                 <tr>
                   <th>#</th>
+                  <th>Photo</th>
                   <th>Date & Time</th>
                   <th>Camera</th>
                   <th>Confidence</th>
-                  <th>Snapshot</th>
+                  <th>VIP Status</th>
                 </tr>
               </thead>
               <tbody>
                 {% for visit in history %}
                 <tr>
                   <td>{{ forloop.counter }}</td>
-                  <td>{{ visit.date }}</td>
-                  <td>{{ visit.camera }}</td>
-                  <td>{{ visit.confidence|default:"-" }}</td>
                   <td>
-                    {% if visit.snapshot %}
-                    <a href="{{ visit.snapshot }}" target="_blank"><img src="{{ visit.snapshot }}" style="height: 40px; border-radius: 4px;"></a>
-                    {% else %}-{% endif %}
+                    {% if visit.image_snapshot %}
+                      <img src="{{ visit.image_snapshot.url }}" class="img-thumbnail" style="width:60px; height:60px; object-fit:cover; cursor:pointer;" onclick="window.open('{{ visit.image_snapshot.url }}', '_blank')">
+                    {% else %}
+                      <span class="text-muted"><i class="fa fa-image"></i> No photo</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <strong>{{ visit.recognized_at|date:"M d, Y" }}</strong><br>
+                    <small class="text-muted">{{ visit.recognized_at|date:"h:i A" }}</small>
+                  </td>
+                  <td>
+                    <span class="label label-info"><i class="fa fa-video-camera"></i> {{ visit.camera_name|default:"Default" }}</span>
+                  </td>
+                  <td>
+                    {% if visit.confidence %}
+                      <div class="progress progress-xs">
+                        <div class="progress-bar progress-bar-success" style="width: {{ visit.confidence }}%"></div>
+                      </div>
+                      <small>{{ visit.confidence|floatformat:2 }}%</small>
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if visit.was_vip_at_time %}
+                      <span class="label label-warning"><i class="fa fa-star"></i> VIP</span>
+                    {% else %}
+                      <span class="label label-default">Regular</span>
+                    {% endif %}
                   </td>
                 </tr>
-                {% empty %}
-                <tr><td colspan="5" class="text-center text-muted">No visits recorded.</td></tr>
                 {% endfor %}
               </tbody>
             </table>
+            {% else %}
+            <div class="alert alert-info text-center">
+              <i class="fa fa-info-circle"></i> No visit records found for this customer yet.
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Sales History (if any) -->
+        <div class="box box-success">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-shopping-cart"></i> Purchase History</h3>
+          </div>
+          <div class="box-body">
+            {% with sales=customer.sale_set.all|slice:":10" %}
+              {% if sales %}
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Invoice</th>
+                    <th>Date</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for sale in sales %}
+                  <tr>
+                    <td><a href="{% url 'sale_detail' sale.id %}">#{{ sale.id }}</a></td>
+                    <td>{{ sale.created_at|date:"M d, Y h:i A" }}</td>
+                    <td>{{ sale.items.count }}</td>
+                    <td><strong>BDT {{ sale.total }}</strong></td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+              {% else %}
+              <div class="alert alert-default text-center">
+                <i class="fa fa-receipt"></i> No purchases yet.
+              </div>
+              {% endif %}
+            {% endwith %}
           </div>
         </div>
       </div>
