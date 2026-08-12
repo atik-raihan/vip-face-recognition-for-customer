@@ -6,4 +6,5 @@ urlpatterns = [
     path("add/", views.add_customer, name="add_customer"),
     path("edit/<int:pk>/", views.edit_customer, name="edit_customer"),
     path("delete/<int:pk>/", views.delete_customer, name="delete_customer"),
+    path("history/<int:pk>/", views.customer_history, name="customer_history"),
 ]

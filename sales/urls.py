@@ -26,4 +26,8 @@ urlpatterns = [
         "print/<int:pk>/", 
         views.print_invoice, 
         name="print_invoice"),
+
+    path("create-customer/", 
+         views.create_customer_from_pos, 
+         name="create_customer_from_pos"),
 ]

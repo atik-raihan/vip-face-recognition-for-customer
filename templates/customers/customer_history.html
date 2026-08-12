@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}{{ customer.name }} - History{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1><i class="fa fa-user-clock"></i> Customer History</h1>
+    <ol class="breadcrumb">
+      <li><a href="{% url 'dashboard' %}">Home</a></li>
+      <li><a href="{% url 'customer_list' %}">Customers</a></li>
+      <li class="active">{{ customer.name }}</li>
+    </ol>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <!-- Profile Card -->
+      <div class="col-md-4">
+        <div class="box box-primary">
+          <div class="box-body box-profile text-center">
+            {% if customer.image %}
+              <img class="profile-user-img img-responsive img-circle" src="{{ customer.image.url }}" style="width:120px; height:120px; object-fit:cover;">
+            {% else %}
+              <img class="profile-user-img img-responsive img-circle" src="https://adminlte.io/themes/v3/dist/img/user4-128x128.jpg" style="width:120px; height:120px;">
+            {% endif %}
+
+            <h3 class="profile-username text-center">
+              {{ customer.name }}
+              {% if customer.is_vip %}
+                <span class="label label-warning"><i class="fa fa-star"></i> VIP</span>
+              {% endif %}
+            </h3>
+            <p class="text-muted text-center">{{ customer.phone|default:"No phone" }}</p>
+
+            <ul class="list-group list-group-unbordered">
+              <li class="list-group-item">
+                <b>Total Visits</b> <span class="pull-right badge bg-blue">{{ total_visits }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Total Purchase</b> <span class="pull-right badge bg-green">BDT {{ customer.total_purchase|default:"0" }}</span>
+              </li>
+              <li class="list-group-item">
+                <b>Member Since</b> <span class="pull-right">{{ customer.created_at|date:"M d, Y" }}</span>
+              </li>
+            </ul>
+
+            <a href="{% url 'edit_customer' customer.id %}" class="btn btn-primary btn-block"><i class="fa fa-edit"></i> Edit</a>
+            <a href="{% url 'customer_list' %}" class="btn btn-default btn-block"><i class="fa fa-arrow-left"></i> Back</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Purchase History -->
+      <div class="col-md-8">
+        <div class="box box-success">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-shopping-cart"></i> Purchase History</h3>
+          </div>
+          <div class="box-body table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for sale in sales %}
+                <tr>
+                  <td><a href="{% url 'sale_detail' sale.id %}">#{{ sale.id }}</a></td>
+                  <td>{{ sale.created_at|date:"M d, Y h:i A" }}</td>
+                  <td>{{ sale.items.count }}</td>
+                  <td><strong>BDT {{ sale.total }}</strong></td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center text-muted">No purchases yet.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Recognition Visits -->
+        <div class="box">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-history"></i> Store Visits (Face Recognition)</h3>
+          </div>
+          <div class="box-body">
+            {% if visits %}
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Photo</th>
+                  <th>Date</th>
+                  <th>Camera</th>
+                  <th>Confidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for visit in visits %}
+                <tr>
+                  <td>{{ forloop.counter }}</td>
+                  <td>
+                    {% if visit.image_snapshot %}
+                      <img src="{{ visit.image_snapshot.url }}" style="width:60px; height:60px; object-fit:cover; border-radius:4px;">
+                    {% else %}
+                      <span class="text-muted">-</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ visit.recognized_at|date:"M d, Y h:i A" }}</td>
+                  <td>{{ visit.camera_name|default:"-" }}</td>
+                  <td>{{ visit.confidence|floatformat:2 }}%</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info text-center">No face recognition visits recorded.</div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

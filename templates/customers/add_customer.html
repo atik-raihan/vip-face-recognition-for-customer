@@ -1,52 +1,154 @@
 ﻿{% extends "base.html" %}
+
+{% block title %}Add Customer{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-<div class="card">
-<div class="card-header">
-<h3>Add Customer</h3>
+<div class="content-wrapper">
+  <section class="content-header">
+    <h1><i class="fa fa-user-plus"></i> Add Customer</h1>
+    <ol class="breadcrumb">
+      <li><a href="{% url 'dashboard' %}">Home</a></li>
+      <li><a href="{% url 'customer_list' %}">Customers</a></li>
+      <li class="active">Add Customer</li>
+    </ol>
+  </section>
+
+  <section class="content">
+    <div class="row">
+      <!-- Form -->
+      <div class="col-md-6">
+        <div class="box box-primary">
+          <div class="box-header">
+            <h3 class="box-title">Customer Details</h3>
+          </div>
+          <div class="box-body">
+            <form method="post" enctype="multipart/form-data" id="customer-form">
+              {% csrf_token %}
+              
+              {% for field in form %}
+                {% if field.name != 'image' %}
+                <div class="form-group">
+                  <label>{{ field.label }}</label>
+                  {{ field }}
+                  {% if field.errors %}
+                    <span class="text-danger">{{ field.errors.0 }}</span>
+                  {% endif %}
+                </div>
+                {% endif %}
+              {% endfor %}
+
+              <!-- Hidden input for camera capture -->
+              <input type="hidden" name="camera_image" id="camera-image-input">
+
+              <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fa fa-save"></i> Save Customer
+                </button>
+                <a href="{% url 'customer_list' %}" class="btn btn-default">Cancel</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Camera Capture -->
+      <div class="col-md-6">
+        <div class="box box-success">
+          <div class="box-header">
+            <h3 class="box-title"><i class="fa fa-camera"></i> Capture Photo</h3>
+          </div>
+          <div class="box-body text-center">
+            <!-- Live Camera -->
+            <div style="position:relative; display:inline-block;">
+              <video id="camera-video" autoplay playsinline style="width:100%; max-width:400px; border-radius:8px; border:2px solid #ddd;"></video>
+              <canvas id="camera-canvas" style="display:none;"></canvas>
+              
+              <!-- Captured Photo Preview -->
+              <img id="photo-preview" style="display:none; width:100%; max-width:400px; border-radius:8px; border:2px solid #28a745;">
+            </div>
+
+            <div style="margin-top:15px;">
+              <button type="button" class="btn btn-success" id="btn-capture">
+                <i class="fa fa-camera"></i> Capture Photo
+              </button>
+              <button type="button" class="btn btn-warning" id="btn-retake" style="display:none;">
+                <i class="fa fa-refresh"></i> Retake
+              </button>
+            </div>
+
+            <p class="text-muted" style="margin-top:10px;">
+              <small>Or <a href="#" onclick="document.getElementById('file-fallback').click(); return false;">upload from file</a></small>
+            </p>
+            <input type="file" id="file-fallback" name="image" accept="image/*" style="display:none;" onchange="handleFileSelect(this)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
-<div class="card-body">
-<form method="POST" enctype="multipart/form-data">
-{% csrf_token %}
-<div class="row">
-<div class="col-md-6 mb-3">
-<label>Name</label>
-{{ form.name }}
-</div>
-<div class="col-md-6 mb-3">
-<label>Phone</label>
-{{ form.phone }}
-</div>
-<div class="col-md-6 mb-3">
-<label>Email</label>
-{{ form.email }}
-</div>
-<div class="col-md-6 mb-3">
-<label>Total Purchase</label>
-{{ form.total_purchase }}
-</div>
-<div class="col-md-6 mb-3">
-<label>Branch</label>
-{{ form.branch }}
-</div>
-<div class="col-md-12 mb-3">
-<label>Address</label>
-{{ form.address }}
-</div>
-<div class="col-md-12 mb-3">
-<label>Photo</label>
-{{ form.image }}
-</div>
-</div>
-<button class="btn btn-success">
-Save Customer
-</button>
-<a href="{% url 'customer_list' %}"
-class="btn btn-secondary">
-Cancel
-</a>
-</form>
-</div>
-</div>
-</div>
+
+<script>
+var video = document.getElementById('camera-video');
+var canvas = document.getElementById('camera-canvas');
+var preview = document.getElementById('photo-preview');
+var captureBtn = document.getElementById('btn-capture');
+var retakeBtn = document.getElementById('btn-retake');
+var hiddenInput = document.getElementById('camera-image-input');
+
+// Start camera
+navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 300 }, audio: false })
+  .then(function(stream) {
+    video.srcObject = stream;
+  })
+  .catch(function(err) {
+    console.log("Camera error:", err);
+    alert("Could not access camera. Please allow camera permission or upload a file.");
+  });
+
+// Capture photo
+captureBtn.addEventListener('click', function() {
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  var ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  // Convert to base64 JPEG
+  var dataURL = canvas.toDataURL('image/jpeg', 0.9);
+  hiddenInput.value = dataURL;
+  
+  // Show preview
+  preview.src = dataURL;
+  preview.style.display = 'block';
+  video.style.display = 'none';
+  
+  captureBtn.style.display = 'none';
+  retakeBtn.style.display = 'inline-block';
+});
+
+// Retake
+retakeBtn.addEventListener('click', function() {
+  hiddenInput.value = '';
+  preview.style.display = 'none';
+  video.style.display = 'block';
+  captureBtn.style.display = 'inline-block';
+  retakeBtn.style.display = 'none';
+});
+
+// File fallback
+function handleFileSelect(input) {
+  if (input.files && input.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+      video.style.display = 'none';
+      captureBtn.style.display = 'none';
+      retakeBtn.style.display = 'inline-block';
+      // Clear camera hidden input so file takes precedence
+      hiddenInput.value = '';
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+}
+</script>
 {% endblock %}
