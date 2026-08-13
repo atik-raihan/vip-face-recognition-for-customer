@@ -103,18 +103,19 @@ def pos(request):
 def create_customer_from_pos(request):
     """AJAX endpoint to create customer with captured photo"""
     if request.method == "POST":
-        name = request.POST.get("name")
-        phone = request.POST.get("phone", "")
+        name = request.POST.get("name", "").strip()
+        phone = request.POST.get("phone", "").strip()
         email = request.POST.get("email", "")
         address = request.POST.get("address", "")
         camera_image = request.POST.get("camera_image")
 
-        if not name:
-            return JsonResponse({"success": False, "message": "Name is required"})
+        # PHONE IS REQUIRED
+        if not phone:
+            return JsonResponse({"success": False, "message": "Phone number is required"})
 
-        # If name is empty, auto-generate from phone
+        # Auto-generate name from phone if empty
         if not name:
-            name = "Customer " + phone[-4:]  # e.g., "Customer 1234"
+            name = "Customer " + phone[-4:]
 
         customer = Customer.objects.create(
             name=name,
@@ -124,6 +125,7 @@ def create_customer_from_pos(request):
             is_vip=False,
             total_purchase=0
         )
+
         if camera_image:
             try:
                 format, imgstr = camera_image.split(';base64,')
@@ -131,7 +133,7 @@ def create_customer_from_pos(request):
                 data = ContentFile(base64.b64decode(imgstr), name=f'customer_{customer.id}.{ext}')
                 customer.image = data
                 customer.save()
-            except Exception as e:
+            except Exception:
                 pass
 
         return JsonResponse({
@@ -142,7 +144,6 @@ def create_customer_from_pos(request):
         })
 
     return JsonResponse({"success": False, "message": "Invalid request"})
-
 
 def get_product(request):
     barcode = request.GET.get("barcode")
