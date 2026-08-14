@@ -1,3 +1,29 @@
+$ErrorActionPreference = "Stop"
+
+# Verify we're in the dashboard directory
+if (-not (Test-Path "manage.py")) {
+    Write-Error "ERROR: manage.py not found. Please cd to your dashboard folder first."
+    exit 1
+}
+
+$dashboardDir = Get-Location
+$posPath = Join-Path $dashboardDir "templates\sales\pos.html"
+
+# Backup existing file
+if (Test-Path $posPath) {
+    $backupPath = $posPath + ".backup." + (Get-Date -Format "yyyyMMddHHmmss")
+    Copy-Item -Path $posPath -Destination $backupPath -Force
+    Write-Host "Backup created: $backupPath" -ForegroundColor Cyan
+}
+
+# Ensure directory exists
+$dir = Split-Path -Parent $posPath
+if (-not (Test-Path $dir)) {
+    New-Item -ItemType Directory -Path $dir -Force | Out-Null
+}
+
+# Write the new pos.html
+$html = @'
 {% extends "base.html" %}
 
 {% block title %}Point of Sale{% endblock %}
@@ -209,7 +235,7 @@ var allCustomers = [
 ];
 
 function escapeHtml(text) {
-    var div = document.createElement("div");
+    var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
@@ -218,31 +244,31 @@ function escapeHtml(text) {
 var cart = [];
 
 function updateCart() {
-    var tbody = document.getElementById("cart-body");
-    var grandTotalEl = document.getElementById("grand-total");
-    var itemsInput = document.getElementById("items-input");
+    var tbody = document.getElementById('cart-body');
+    var grandTotalEl = document.getElementById('grand-total');
+    var itemsInput = document.getElementById('items-input');
 
     if (cart.length === 0) {
-        tbody.innerHTML = "<tr id='empty-cart'><td colspan='5' class='text-center text-muted'>Cart is empty</td></tr>";
-        grandTotalEl.textContent = "0.00";
-        itemsInput.value = "[]";
+        tbody.innerHTML = '<tr id="empty-cart"><td colspan="5" class="text-center text-muted">Cart is empty</td></tr>';
+        grandTotalEl.textContent = '0.00';
+        itemsInput.value = '[]';
         return;
     }
 
-    var html = "";
+    var html = '';
     var grandTotal = 0;
 
     for (var i = 0; i < cart.length; i++) {
         var item = cart[i];
         var total = item.price * item.qty;
         grandTotal += total;
-        html += "<tr>" +
-            "<td>" + escapeHtml(item.name) + "</td>" +
-            "<td><input type='number' class='form-control qty-input' data-index='" + i + "' value='" + item.qty + "' min='1' max='" + item.stock + "' style='width:60px;'></td>" +
-            "<td>" + item.price.toFixed(2) + "</td>" +
-            "<td>" + total.toFixed(2) + "</td>" +
-            "<td><button type='button' class='btn btn-xs btn-danger remove-item' data-index='" + i + "'><i class='fa fa-trash'></i></button></td>" +
-            "</tr>";
+        html += '<tr>' +
+            '<td>' + escapeHtml(item.name) + '</td>' +
+            '<td><input type="number" class="form-control qty-input" data-index="' + i + '" value="' + item.qty + '" min="1" max="' + item.stock + '" style="width:60px;"></td>' +
+            '<td>' + item.price.toFixed(2) + '</td>' +
+            '<td>' + total.toFixed(2) + '</td>' +
+            '<td><button type="button" class="btn btn-xs btn-danger remove-item" data-index="' + i + '"><i class="fa fa-trash"></i></button></td>' +
+            '</tr>';
     }
 
     tbody.innerHTML = html;
@@ -255,13 +281,13 @@ function updateCart() {
     itemsInput.value = JSON.stringify(itemsForServer);
 }
 
-document.addEventListener("click", function(e) {
-    var addBtn = e.target.closest(".add-to-cart");
+document.addEventListener('click', function(e) {
+    var addBtn = e.target.closest('.add-to-cart');
     if (addBtn) {
-        var id = addBtn.getAttribute("data-id");
-        var name = addBtn.getAttribute("data-name");
-        var price = parseFloat(addBtn.getAttribute("data-price"));
-        var stock = parseInt(addBtn.getAttribute("data-stock"));
+        var id = addBtn.getAttribute('data-id');
+        var name = addBtn.getAttribute('data-name');
+        var price = parseFloat(addBtn.getAttribute('data-price'));
+        var stock = parseInt(addBtn.getAttribute('data-stock'));
 
         var existing = null;
         for (var k = 0; k < cart.length; k++) {
@@ -275,7 +301,7 @@ document.addEventListener("click", function(e) {
             if (existing.qty < stock) {
                 existing.qty++;
             } else {
-                alert("Not enough stock!");
+                alert('Not enough stock!');
             }
         } else {
             cart.push({id: id, name: name, price: price, qty: 1, stock: stock});
@@ -284,35 +310,35 @@ document.addEventListener("click", function(e) {
         return;
     }
 
-    var removeBtn = e.target.closest(".remove-item");
+    var removeBtn = e.target.closest('.remove-item');
     if (removeBtn) {
-        var idx = parseInt(removeBtn.getAttribute("data-index"));
+        var idx = parseInt(removeBtn.getAttribute('data-index'));
         cart.splice(idx, 1);
         updateCart();
     }
 });
 
-document.addEventListener("change", function(e) {
-    if (e.target.classList.contains("qty-input")) {
-        var idx = parseInt(e.target.getAttribute("data-index"));
+document.addEventListener('change', function(e) {
+    if (e.target.classList.contains('qty-input')) {
+        var idx = parseInt(e.target.getAttribute('data-index'));
         var newQty = parseInt(e.target.value);
         if (newQty > 0 && newQty <= cart[idx].stock) {
             cart[idx].qty = newQty;
         } else {
-            alert("Invalid quantity or not enough stock!");
+            alert('Invalid quantity or not enough stock!');
             e.target.value = cart[idx].qty;
         }
         updateCart();
     }
 });
 
-document.getElementById("barcode-input").addEventListener("keypress", function(e) {
-    if (e.key === "Enter") {
+document.getElementById('barcode-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
         e.preventDefault();
         var barcode = this.value.trim();
         if (!barcode) return;
 
-        fetch("/pos/get-product/?barcode=" + encodeURIComponent(barcode))
+        fetch('/pos/get-product/?barcode=' + encodeURIComponent(barcode))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 if (data.success) {
@@ -328,7 +354,7 @@ document.getElementById("barcode-input").addEventListener("keypress", function(e
                         if (existing.qty < data.stock) {
                             existing.qty++;
                         } else {
-                            alert("Not enough stock!");
+                            alert('Not enough stock!');
                         }
                     } else {
                         cart.push({
@@ -340,25 +366,25 @@ document.getElementById("barcode-input").addEventListener("keypress", function(e
                         });
                     }
                     updateCart();
-                    document.getElementById("barcode-input").value = "";
+                    document.getElementById('barcode-input').value = '';
                 } else {
-                    alert("Product not found!");
+                    alert('Product not found!');
                 }
             });
     }
 });
 
 // Validate before submit
-document.getElementById("sale-form").addEventListener("submit", function(e) {
+document.getElementById('sale-form').addEventListener('submit', function(e) {
     if (cart.length === 0) {
         e.preventDefault();
-        alert("Please add at least one product to the cart.");
+        alert('Please add at least one product to the cart.');
         return false;
     }
     updateCart();
 
-    var grandTotal = parseFloat(document.getElementById("grand-total").textContent);
-    var customerId = document.getElementById("customer-id-input").value;
+    var grandTotal = parseFloat(document.getElementById('grand-total').textContent);
+    var customerId = document.getElementById('customer-id-input').value;
 
     if (grandTotal >= 1000 && !customerId) {
         e.preventDefault();
@@ -368,44 +394,44 @@ document.getElementById("sale-form").addEventListener("submit", function(e) {
 });
 
 // ==================== CUSTOMER AUTOCOMPLETE ====================
-var searchInput = document.getElementById("customer-search");
-var dropdown = document.getElementById("customer-dropdown");
+var searchInput = document.getElementById('customer-search');
+var dropdown = document.getElementById('customer-dropdown');
 
 function hideDropdown() {
-    dropdown.style.display = "none";
+    dropdown.style.display = 'none';
 }
 
 function renderDropdown(query) {
     var q = query.toLowerCase();
-    var html = "";
+    var html = '';
     var found = 0;
 
     for (var i = 0; i < allCustomers.length; i++) {
         var c = allCustomers[i];
-        var text = (c.name + " " + c.phone).toLowerCase();
+        var text = (c.name + ' ' + c.phone).toLowerCase();
         if (text.indexOf(q) !== -1) {
-            var vipIcon = c.is_vip ? " <span style='color:#f39c12; font-size:11px;'><i class='fa fa-star'></i> VIP</span>" : "";
-            html += "<div onclick='selectCustomer(\"" + c.id + "\")' style='padding:10px 15px; cursor:pointer; border-bottom:1px solid #f4f4f4;' onmouseover='this.style.background=\"#f5f5f5\"' onmouseout='this.style.background=\"#fff\"'>" +
-                "<div style='font-weight:600; color:#333;'>" + escapeHtml(c.name) + vipIcon + "</div>" +
-                "<div style='font-size:12px; color:#777;'>" + (c.phone ? escapeHtml(c.phone) : "No phone") + "</div>" +
-                "</div>";
+            var vipIcon = c.is_vip ? ' <span style="color:#f39c12; font-size:11px;"><i class="fa fa-star"></i> VIP</span>' : '';
+            html += '<div onclick="selectCustomer(\'' + c.id + '\')" style="padding:10px 15px; cursor:pointer; border-bottom:1px solid #f4f4f4;" onmouseover="this.style.background=\'#f5f5f5\'" onmouseout="this.style.background=\'#fff\'">' +
+                '<div style="font-weight:600; color:#333;">' + escapeHtml(c.name) + vipIcon + '</div>' +
+                '<div style="font-size:12px; color:#777;">' + (c.phone ? escapeHtml(c.phone) : 'No phone') + '</div>' +
+                '</div>';
             found++;
         }
     }
 
     if (found === 0) {
-        html += "<div style='padding:15px; text-align:center; color:#999; font-size:13px;'>No matching customer</div>";
+        html += '<div style="padding:15px; text-align:center; color:#999; font-size:13px;">No matching customer</div>';
     }
 
-    html += "<div onclick='openAddCustomerModal(); hideDropdown();' style='padding:10px 15px; text-align:center; background:#f8f9fa; cursor:pointer; color:#28a745; font-weight:600; border-top:1px solid #ddd;'>" +
-        "<i class='fa fa-plus-circle'></i> Add New Customer" +
-        "</div>";
+    html += '<div onclick="openAddCustomerModal(); hideDropdown();" style="padding:10px 15px; text-align:center; background:#f8f9fa; cursor:pointer; color:#28a745; font-weight:600; border-top:1px solid #ddd;">' +
+        '<i class="fa fa-plus-circle"></i> Add New Customer' +
+        '</div>';
 
     dropdown.innerHTML = html;
-    dropdown.style.display = "block";
+    dropdown.style.display = 'block';
 }
 
-searchInput.addEventListener("input", function() {
+searchInput.addEventListener('input', function() {
     var query = this.value.trim();
     if (query.length === 0) {
         hideDropdown();
@@ -414,14 +440,14 @@ searchInput.addEventListener("input", function() {
     renderDropdown(query);
 });
 
-searchInput.addEventListener("focus", function() {
+searchInput.addEventListener('focus', function() {
     if (this.value.trim().length > 0) {
         renderDropdown(this.value.trim());
     }
 });
 
-document.addEventListener("click", function(e) {
-    var wrap = document.getElementById("customer-search-wrap");
+document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('customer-search-wrap');
     if (wrap && !wrap.contains(e.target)) {
         hideDropdown();
     }
@@ -437,19 +463,19 @@ function selectCustomer(id) {
     }
     if (!c) return;
 
-    document.getElementById("customer-id-input").value = c.id;
-    var vipBadge = c.is_vip ? " <span class='label label-warning' style='font-size:10px;'><i class='fa fa-star'></i> VIP</span>" : "";
-    document.getElementById("selected-customer-text").innerHTML = "<strong>" + escapeHtml(c.name) + "</strong> (" + escapeHtml(c.phone || "no phone") + ")" + vipBadge;
-    document.getElementById("selected-customer").style.display = "block";
-    searchInput.value = "";
-    searchInput.placeholder = "Change customer...";
+    document.getElementById('customer-id-input').value = c.id;
+    var vipBadge = c.is_vip ? ' <span class="label label-warning" style="font-size:10px;"><i class="fa fa-star"></i> VIP</span>' : '';
+    document.getElementById('selected-customer-text').innerHTML = '<strong>' + escapeHtml(c.name) + '</strong> (' + escapeHtml(c.phone || 'no phone') + ')' + vipBadge;
+    document.getElementById('selected-customer').style.display = 'block';
+    searchInput.value = '';
+    searchInput.placeholder = 'Change customer...';
     hideDropdown();
 }
 
 function clearCustomer() {
-    document.getElementById("customer-id-input").value = "";
-    document.getElementById("selected-customer").style.display = "none";
-    searchInput.placeholder = "Type phone or name...";
+    document.getElementById('customer-id-input').value = '';
+    document.getElementById('selected-customer').style.display = 'none';
+    searchInput.placeholder = 'Type phone or name...';
 }
 
 // ==================== ADD CUSTOMER MODAL ====================
@@ -458,27 +484,27 @@ var autoCaptureInterval = null;
 var lastCapturedImage = null;
 
 function openAddCustomerModal() {
-    var searchVal = document.getElementById("customer-search").value.trim();
+    var searchVal = document.getElementById('customer-search').value.trim();
     if (searchVal && /^[0-9+\-\s]+$/.test(searchVal)) {
-        document.getElementById("modal-phone").value = searchVal;
+        document.getElementById('modal-phone').value = searchVal;
     }
-    document.getElementById("addCustomerModal").style.display = "flex";
+    document.getElementById('addCustomerModal').style.display = 'flex';
     startModalCamera();
 }
 
 function closeAddCustomerModal() {
-    document.getElementById("addCustomerModal").style.display = "none";
+    document.getElementById('addCustomerModal').style.display = 'none';
     stopModalCamera();
 }
 
 function startModalCamera() {
-    var video = document.getElementById("modal-camera");
-    var preview = document.getElementById("modal-preview");
+    var video = document.getElementById('modal-camera');
+    var preview = document.getElementById('modal-preview');
 
-    preview.style.display = "none";
-    video.style.display = "block";
-    document.getElementById("btn-retake-modal").style.display = "none";
-    document.getElementById("btn-snap-now").style.display = "inline-block";
+    preview.style.display = 'none';
+    video.style.display = 'block';
+    document.getElementById('btn-retake-modal').style.display = 'none';
+    document.getElementById('btn-snap-now').style.display = 'inline-block';
     lastCapturedImage = null;
 
     navigator.mediaDevices.getUserMedia({ video: { width: 400, height: 300 }, audio: false })
@@ -508,31 +534,31 @@ function stopModalCamera() {
 }
 
 function captureToBuffer() {
-    var video = document.getElementById("modal-camera");
-    var canvas = document.getElementById("modal-canvas");
+    var video = document.getElementById('modal-camera');
+    var canvas = document.getElementById('modal-canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    var ctx = canvas.getContext("2d");
+    var ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    lastCapturedImage = canvas.toDataURL("image/jpeg", 0.85);
-    var indicator = document.getElementById("capture-indicator");
-    indicator.innerHTML = "<i class='fa fa-check-circle text-success' style='font-size:8px;'></i> Ready";
+    lastCapturedImage = canvas.toDataURL('image/jpeg', 0.85);
+    var indicator = document.getElementById('capture-indicator');
+    indicator.innerHTML = '<i class="fa fa-check-circle text-success" style="font-size:8px;"></i> Ready';
 }
 
 function manualSnap() {
-    var video = document.getElementById("modal-camera");
-    var canvas = document.getElementById("modal-canvas");
-    var preview = document.getElementById("modal-preview");
+    var video = document.getElementById('modal-camera');
+    var canvas = document.getElementById('modal-canvas');
+    var preview = document.getElementById('modal-preview');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    var ctx = canvas.getContext("2d");
+    var ctx = canvas.getContext('2d');
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    lastCapturedImage = canvas.toDataURL("image/jpeg", 0.85);
+    lastCapturedImage = canvas.toDataURL('image/jpeg', 0.85);
     preview.src = lastCapturedImage;
-    preview.style.display = "block";
-    video.style.display = "none";
-    document.getElementById("btn-snap-now").style.display = "none";
-    document.getElementById("btn-retake-modal").style.display = "inline-block";
+    preview.style.display = 'block';
+    video.style.display = 'none';
+    document.getElementById('btn-snap-now').style.display = 'none';
+    document.getElementById('btn-retake-modal').style.display = 'inline-block';
     if (autoCaptureInterval) {
         clearInterval(autoCaptureInterval);
         autoCaptureInterval = null;
@@ -540,12 +566,12 @@ function manualSnap() {
 }
 
 function retakeModal() {
-    var video = document.getElementById("modal-camera");
-    var preview = document.getElementById("modal-preview");
-    preview.style.display = "none";
-    video.style.display = "block";
-    document.getElementById("btn-snap-now").style.display = "inline-block";
-    document.getElementById("btn-retake-modal").style.display = "none";
+    var video = document.getElementById('modal-camera');
+    var preview = document.getElementById('modal-preview');
+    preview.style.display = 'none';
+    video.style.display = 'block';
+    document.getElementById('btn-snap-now').style.display = 'inline-block';
+    document.getElementById('btn-retake-modal').style.display = 'none';
     lastCapturedImage = null;
     if (!autoCaptureInterval && modalStream) {
         autoCaptureInterval = setInterval(function() {
@@ -557,36 +583,36 @@ function retakeModal() {
 }
 
 function saveCustomerAndSelect() {
-    var name = document.getElementById("modal-name").value.trim();
-    var phone = document.getElementById("modal-phone").value.trim();
+    var name = document.getElementById('modal-name').value.trim();
+    var phone = document.getElementById('modal-phone').value.trim();
 
     if (!phone) {
-        alert("Phone number is required");
+        alert('Phone number is required');
         return;
     }
 
-    var btn = document.getElementById("btn-save-customer");
+    var btn = document.getElementById('btn-save-customer');
     btn.disabled = true;
-    btn.innerHTML = "<i class='fa fa-spinner fa-spin'></i> Saving...";
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Saving...';
 
     var formData = new FormData();
-    formData.append("csrfmiddlewaretoken", document.querySelector("[name=csrfmiddlewaretoken]").value);
-    formData.append("name", name);
-    formData.append("phone", phone);
-    formData.append("email", document.getElementById("modal-email").value);
-    formData.append("address", document.getElementById("modal-address").value);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    formData.append('name', name);
+    formData.append('phone', phone);
+    formData.append('email', document.getElementById('modal-email').value);
+    formData.append('address', document.getElementById('modal-address').value);
 
     if (lastCapturedImage) {
-        formData.append("camera_image", lastCapturedImage);
+        formData.append('camera_image', lastCapturedImage);
     }
 
-    fetch("/pos/create-customer/", {
-        method: "POST",
+    fetch('/pos/create-customer/', {
+        method: 'POST',
         body: formData
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
-        var msgEl = document.getElementById("modal-message");
+        var msgEl = document.getElementById('modal-message');
         if (data.success) {
             var newCustomer = {
                 id: data.customer_id,
@@ -597,35 +623,57 @@ function saveCustomerAndSelect() {
             allCustomers.push(newCustomer);
             selectCustomer(data.customer_id);
 
-            msgEl.innerHTML = "<div class='alert alert-success'><i class='fa fa-check'></i> " + data.message + "</div>";
+            msgEl.innerHTML = '<div class="alert alert-success"><i class="fa fa-check"></i> ' + data.message + '</div>';
 
             setTimeout(function() {
                 closeAddCustomerModal();
                 btn.disabled = false;
-                btn.innerHTML = "<i class='fa fa-save'></i> Save & Select";
-                msgEl.innerHTML = "";
-                document.getElementById("modal-name").value = "";
-                document.getElementById("modal-phone").value = "";
-                document.getElementById("modal-email").value = "";
-                document.getElementById("modal-address").value = "";
+                btn.innerHTML = '<i class="fa fa-save"></i> Save & Select';
+                msgEl.innerHTML = '';
+                document.getElementById('modal-name').value = '';
+                document.getElementById('modal-phone').value = '';
+                document.getElementById('modal-email').value = '';
+                document.getElementById('modal-address').value = '';
             }, 1500);
         } else {
-            msgEl.innerHTML = "<div class='alert alert-danger'>" + data.message + "</div>";
+            msgEl.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
             btn.disabled = false;
-            btn.innerHTML = "<i class='fa fa-save'></i> Save & Select";
+            btn.innerHTML = '<i class="fa fa-save"></i> Save & Select';
         }
     })
     .catch(function(err) {
-        document.getElementById("modal-message").innerHTML = "<div class='alert alert-danger'>Error saving customer</div>";
+        document.getElementById('modal-message').innerHTML = '<div class="alert alert-danger">Error saving customer</div>';
         btn.disabled = false;
-        btn.innerHTML = "<i class='fa fa-save'></i> Save & Select";
+        btn.innerHTML = '<i class="fa fa-save"></i> Save & Select';
     });
 }
 
-document.getElementById("addCustomerModal").addEventListener("click", function(e) {
+document.getElementById('addCustomerModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeAddCustomerModal();
     }
 });
 </script>
 {% endblock %}
+
+'@
+
+Set-Content -Path $posPath -Value $html -Encoding UTF8
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Green
+Write-Host "  pos.html UPDATED SUCCESSFULLY!" -ForegroundColor Green
+Write-Host "========================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Features included:" -ForegroundColor Yellow
+Write-Host "  - Type-to-search customer autocomplete dropdown" -ForegroundColor White
+Write-Host "  - Click customer to select, X to clear" -ForegroundColor White
+Write-Host "  - + button / 'Add New Customer' in dropdown" -ForegroundColor White
+Write-Host "  - Auto-capture camera in modal (silent every 2s)" -ForegroundColor White
+Write-Host "  - Phone required, name auto-generates if empty" -ForegroundColor White
+Write-Host "  - If total >= 1000, modal opens automatically" -ForegroundColor White
+Write-Host "  - Cart, barcode scan, print invoice all working" -ForegroundColor White
+Write-Host ""
+Write-Host "Next steps:" -ForegroundColor Cyan
+Write-Host "  1. Restart server: python manage.py runserver" -ForegroundColor White
+Write-Host "  2. Go to /pos/ and test the search" -ForegroundColor White
+Write-Host "  3. Complete a sale over 1000 to test auto-modal" -ForegroundColor White
