@@ -1,4 +1,18 @@
-{% extends "base.html" %}
+﻿    <style>
+    .vip-stats{display:flex;gap:12px;margin:15px 0}
+    .stat-box{background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;padding:12px;border-radius:10px;text-align:center;flex:1;box-shadow:0 4px 6px rgba(0,0,0,.1)}
+    .stat-number{font-size:22px;font-weight:700}
+    .stat-label{font-size:11px;opacity:.9;text-transform:uppercase;letter-spacing:.5px}
+    .frequent-items{margin-top:10px}
+    .frequent-items h6{font-weight:600;color:#555;margin-bottom:8px}
+    .item-tags .badge{margin:2px;font-size:12px;padding:5px 10px;background:#17a2b8}
+    .vip-photo{width:100px;height:100px;object-fit:cover;border-radius:50%;border:3px solid #f39c12;box-shadow:0 0 15px rgba(243,156,18,.4)}
+    .vip-glow .modal-content{border:none;border-radius:15px;overflow:hidden}
+    .vip-glow .modal-header{background:linear-gradient(90deg,#f39c12,#e74c3c);color:#fff;border:none}
+    .vip-glow .modal-title{font-weight:700;letter-spacing:.5px}
+    .vip-badge-lg{font-size:14px;padding:6px 14px;border-radius:20px}
+    </style>
+﻿{% extends "base.html" %}
 
 {% block title %}Point of Sale{% endblock %}
 
@@ -628,4 +642,61 @@ document.getElementById("addCustomerModal").addEventListener("click", function(e
     }
 });
 </script>
+
+<!-- VIP Detection Popup -->
+<div class="modal fade" id="vipPopup" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content vip-glow">
+      <div class="modal-header">
+        <h5 class="modal-title">🌟 VIP Customer Detected</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="vipPhoto" src="" alt="VIP" class="vip-photo mb-2">
+        <h4 id="vipName" class="font-weight-bold mb-1"></h4>
+        <span class="badge badge-warning vip-badge-lg mb-3">VIP</span>
+        <div class="vip-stats">
+          <div class="stat-box"><div class="stat-number" id="vipVisitCount">0</div><div class="stat-label">Total Visits</div></div>
+          <div class="stat-box"><div class="stat-number" id="vipLastVisit">-</div><div class="stat-label">Last Visit</div></div>
+        </div>
+        <div class="frequent-items text-left">
+          <h6><i class="fas fa-shopping-basket mr-1"></i> Frequently Bought:</h6>
+          <div id="vipFrequentItems" class="item-tags"><span class="badge badge-secondary">No data yet</span></div>
+        </div>
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-warning btn-lg" data-dismiss="modal"><i class="fas fa-check mr-1"></i> Acknowledge</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
+
+<script>
+// ===== VIP Detection & Browser Notifications =====
+(function(){
+let lastVIPId=null;
+function reqNotifPerm(){if("Notification" in window&&Notification.permission==="default")Notification.requestPermission();}
+reqNotifPerm();
+function showVIPNotification(c){
+if(Notification.permission!=="granted")return;
+var b=c.name+" is here! Visit #"+(c.visit_count||0)+". Last: "+(c.last_visit||'First visit');
+new Notification("🌟 VIP Customer Detected",{body:b,icon:c.photo_url||"/static/adminlte/dist/img/avatar.png",tag:"vip-"+c.id,requireInteraction:true});
+}
+function populateVIPPopup(d){
+document.getElementById('vipName').textContent=d.name||'Unknown';
+document.getElementById('vipPhoto').src=d.photo_url||'/static/adminlte/dist/img/avatar.png';
+document.getElementById('vipVisitCount').textContent=d.visit_count||0;
+document.getElementById('vipLastVisit').textContent=d.last_visit||'First visit';
+var ic=document.getElementById('vipFrequentItems');
+if(d.frequent_items&&d.frequent_items.length>0){ic.innerHTML=d.frequent_items.map(function(i){return'<span class="badge badge-info">'+i+'</span>';}).join(' ');}
+else{ic.innerHTML='<span class="badge badge-secondary">No purchase history</span>';}
+}
+function showVIPPopup(){$('#vipPopup').modal('show');}
+function pollVIPStatus(){
+fetch('/sales/api/vip-status/').then(function(r){return r.json();}).then(function(data){
+if(data.vip_detected&&data.customer&&data.customer.id!==lastVIPId){lastVIPId=data.customer.id;populateVIPPopup(data.customer);showVIPPopup();showVIPNotification(data.customer);}}).catch(function(e){console.error('VIP poll error:',e);});
+}
+setInterval(pollVIPStatus,4000);
+})();
+</script>

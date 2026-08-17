@@ -30,5 +30,4 @@ urlpatterns = [
     path("create-customer/", 
          views.create_customer_from_pos, 
          name="create_customer_from_pos"),
-    path('api/vip-status/', views.pos_vip_status, name='pos_vip_status'),
 ]
