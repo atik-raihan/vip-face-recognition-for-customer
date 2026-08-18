@@ -30,3 +30,28 @@ face_recognition_app.zip
 .DS_Store
 Thumbs.db
 *.bak
+
+# Python
+__pycache__/
+*.py[cod]
+*.class
+
+# Virtual environment
+venv/
+.venv/
+
+# Django
+*.log
+
+# Environment / secrets
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
