@@ -1,4 +1,4 @@
-"""
+﻿"""
 Telegram Bot API service for VIP customer notifications.
 Requires in config/settings.py:
     TELEGRAM_BOT_TOKEN = "your-bot-token"
@@ -48,19 +48,15 @@ class TelegramService:
         if arrived_at is None:
             arrived_at = timezone.now()
 
+        
         message = (
-            "<b>VIP Customer Alert</b>
-
-"
-            "Customer: " + str(customer_name) + "
-"
-            "Total Purchase: BDT " + str(total_purchase) + "
-"
+            "<b>VIP Customer Alert</b>`n"
+            "Customer: " + str(customer_name) + "`n"
+            "Total Purchase: BDT " + str(total_purchase) + "`n"
             "Arrived at: " + arrived_at.strftime("%Y-%m-%d %H:%M")
         )
         if phone:
-            message += "
-Phone: " + str(phone)
+            message += "`nPhone: " + str(phone)
 
         return self.send_message(self.manager_chat_id, message)
 

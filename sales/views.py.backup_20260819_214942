@@ -1,0 +1,258 @@
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
+from customers.models import Customer
+from products.models import Product
+from .models import Sale, SaleItem
+import json
+import base64
+
+
+def pos(request):
+    if request.method == "POST":
+        # Check if this is a customer+sale combined request
+        customer_id = request.POST.get("customer")
+        items_json = request.POST.get("items", "[]")
+        
+        # If creating new customer from POS
+        new_customer_data = request.POST.get("new_customer_data")
+        if new_customer_data:
+            customer_data = json.loads(new_customer_data)
+            customer = Customer.objects.create(
+                name=customer_data.get("name", "Walk-in"),
+                phone=customer_data.get("phone", ""),
+                email=customer_data.get("email", ""),
+                address=customer_data.get("address", ""),
+                is_vip=False,
+                total_purchase=0
+            )
+            # Handle base64 image
+            camera_image = request.POST.get("customer_photo")
+            if camera_image:
+                try:
+                    format, imgstr = camera_image.split(';base64,')
+                    ext = format.split('/')[-1]
+                    data = ContentFile(base64.b64decode(imgstr), name=f'customer_{customer.id}.{ext}')
+                    customer.image = data
+                    customer.save()
+                except Exception:
+                    pass
+        elif customer_id:
+            try:
+                customer = Customer.objects.get(id=customer_id)
+            except Customer.DoesNotExist:
+                customer = None
+        else:
+            customer = None
+
+        items = json.loads(items_json)
+        if not items:
+            return redirect("pos")
+
+        total = 0
+        sale = Sale.objects.create(customer=customer, total=0)
+
+        for item in items:
+            product = Product.objects.get(id=item["id"])
+            qty = int(item["qty"])
+            subtotal = product.price * qty
+
+            SaleItem.objects.create(
+                sale=sale,
+                product=product,
+                quantity=qty,
+                price=product.price,
+                subtotal=subtotal
+            )
+            product.stock -= qty
+            product.save()
+            total += subtotal
+
+        sale.total = total
+        sale.save()
+
+        # If new customer, update their purchase total
+        if new_customer_data and customer:
+            customer.total_purchase = total
+            if customer.total_purchase >= 1000:
+                customer.is_vip = True
+            customer.save()
+
+        # If existing customer, update total
+        if customer and not new_customer_data:
+            customer.total_purchase += total
+            if customer.total_purchase >= 1000:
+                customer.is_vip = True
+            customer.save()
+
+        return redirect("print_invoice", pk=sale.id)
+
+    return render(
+        request,
+        "sales/pos.html",
+        {
+            "customers": Customer.objects.all().order_by("name"),
+            "products": Product.objects.all().order_by("name"),
+        },
+    )
+
+
+@csrf_exempt
+def create_customer_from_pos(request):
+    """AJAX endpoint to create customer with captured photo"""
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        phone = request.POST.get("phone", "").strip()
+        email = request.POST.get("email", "")
+        address = request.POST.get("address", "")
+        camera_image = request.POST.get("camera_image")
+
+        # PHONE IS REQUIRED
+        if not phone:
+            return JsonResponse({"success": False, "message": "Phone number is required"})
+
+        # Auto-generate name from phone if empty
+        if not name:
+            name = "Customer " + phone[-4:]
+
+        customer = Customer.objects.create(
+            name=name,
+            phone=phone,
+            email=email,
+            address=address,
+            is_vip=False,
+            total_purchase=0
+        )
+
+        if camera_image:
+            try:
+                format, imgstr = camera_image.split(';base64,')
+                ext = format.split('/')[-1]
+                data = ContentFile(base64.b64decode(imgstr), name=f'customer_{customer.id}.{ext}')
+                customer.image = data
+                customer.save()
+            except Exception:
+                pass
+
+        return JsonResponse({
+            "success": True,
+            "customer_id": customer.id,
+            "customer_name": customer.name,
+            "message": f"Customer '{customer.name}' saved successfully!"
+        })
+
+    return JsonResponse({"success": False, "message": "Invalid request"})
+
+def get_product(request):
+    barcode = request.GET.get("barcode")
+    if barcode:
+        try:
+            product = Product.objects.get(barcode=barcode)
+        except Product.DoesNotExist:
+            return JsonResponse({"success": False})
+    else:
+        try:
+            product = Product.objects.get(id=request.GET.get("id"))
+        except (Product.DoesNotExist, ValueError):
+            return JsonResponse({"success": False})
+
+    return JsonResponse({
+        "success": True,
+        "id": product.id,
+        "name": product.name,
+        "price": float(product.price),
+        "stock": product.stock,
+    })
+
+
+def print_invoice(request, pk):
+    sale = get_object_or_404(Sale, pk=pk)
+    items = SaleItem.objects.filter(sale=sale).select_related("product")
+    return render(request, "sales/print_invoice.html", {
+        "sale": sale,
+        "items": items,
+        "now": timezone.now(),
+    })
+
+
+def sales_history(request):
+    sales = Sale.objects.select_related("customer").order_by("-created_at")
+    return render(request, "sales/history.html", {"sales": sales})
+
+
+def sale_detail(request, pk):
+    sale = get_object_or_404(Sale, pk=pk)
+    items = SaleItem.objects.filter(sale=sale).select_related("product")
+    return render(request, "sales/detail.html", {"sale": sale, "items": items})
+
+# ===== VIP Status API for POS (Feature A + D) =====
+from django.http import JsonResponse
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Sum
+from face_recognition_app.models import RecognitionLog
+
+@login_required
+def pos_vip_status(request):
+    """Return recent VIP detection data for POS popup with visit stats & frequent items."""
+    cutoff = timezone.now() - timedelta(minutes=10)
+    recent_log = RecognitionLog.objects.filter(
+        detected_at__gte=cutoff,
+        customer__is_vip=True
+    ).select_related('customer').order_by('-detected_at').first()
+
+    if not recent_log:
+        return JsonResponse({'vip_detected': False})
+
+    customer = recent_log.customer
+    visit_count = RecognitionLog.objects.filter(customer=customer).count()
+
+    last_visit_log = RecognitionLog.objects.filter(
+        customer=customer,
+        detected_at__lt=recent_log.detected_at
+    ).order_by('-detected_at').first()
+
+    last_visit = None
+    if last_visit_log:
+        diff = timezone.now() - last_visit_log.detected_at
+        if diff.days > 0:
+            last_visit = str(diff.days) + ' days ago'
+        elif diff.seconds // 3600 > 0:
+            last_visit = str(diff.seconds // 3600) + ' hours ago'
+        else:
+            last_visit = str(diff.seconds // 60) + ' mins ago'
+
+    frequent_items = []
+    try:
+        frequent_items_qs = SaleItem.objects.filter(
+            sale__customer=customer
+        ).values('product__name').annotate(
+            total_qty=Sum('quantity')
+        ).order_by('-total_qty')[:5]
+        frequent_items = [item['product__name'] for item in frequent_items_qs if item['product__name']]
+    except Exception:
+        pass
+
+    photo_url = None
+    if hasattr(customer, 'photo') and customer.photo:
+        try:
+            photo_url = customer.photo.url
+        except Exception:
+            pass
+
+    return JsonResponse({
+        'vip_detected': True,
+        'customer': {
+            'id': customer.id,
+            'name': customer.name,
+            'phone': customer.phone,
+            'photo_url': photo_url,
+            'is_vip': customer.is_vip,
+            'visit_count': visit_count,
+            'last_visit': last_visit or 'First visit',
+            'frequent_items': frequent_items,
+        }
+    })

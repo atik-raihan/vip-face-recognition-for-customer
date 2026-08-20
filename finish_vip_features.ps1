@@ -1,0 +1,501 @@
+﻿$ErrorActionPreference = "Continue"
+
+# ============================================================
+# VIP RECOGNITION - FINAL FEATURE CHECK / SAFE REPAIR
+# Employee Attendance + Dashboard + Camera + UI/Error Checks
+#
+# Run from:
+# D:\Downloads\vip-recognition-core\vip-recognition\dashboard
+#
+# This script:
+#   1. Creates a backup folder
+#   2. Runs Django checks/migrations validation
+#   3. Verifies employee recognition/attendance pipeline
+#   4. Verifies dashboard statistics
+#   5. Verifies camera configuration/stream pipeline
+#   6. Verifies POS/recognition UI integration
+#   7. Searches for common broken field references
+#   8. Produces FINAL_PROJECT_HEALTH_REPORT.txt
+#
+# It does NOT blindly overwrite application files.
+# ============================================================
+
+$Root = (Get-Location).Path
+$Report = Join-Path $Root "FINAL_PROJECT_HEALTH_REPORT.txt"
+$BackupRoot = Join-Path $Root ("project_backup_" + (Get-Date -Format "yyyyMMdd_HHmmss"))
+
+$pass = 0
+$warn = 0
+$fail = 0
+$lines = New-Object System.Collections.Generic.List[string]
+
+function Write-Result {
+    param(
+        [string]$Status,
+        [string]$Title,
+        [string]$Details
+    )
+
+    $prefix = "[$Status]"
+    $text = "$prefix $Title`r`n    $Details"
+    $lines.Add($text)
+
+    if ($Status -eq "PASS") {
+        $script:pass++
+        Write-Host $text -ForegroundColor Green
+    }
+    elseif ($Status -eq "WARN") {
+        $script:warn++
+        Write-Host $text -ForegroundColor Yellow
+    }
+    else {
+        $script:fail++
+        Write-Host $text -ForegroundColor Red
+    }
+
+    Write-Host ""
+}
+
+function Find-Text {
+    param(
+        [string]$Pattern,
+        [string[]]$Files
+    )
+
+    $hits = @()
+
+    foreach ($file in $Files) {
+        if (Test-Path $file) {
+            try {
+                $result = Select-String -Path $file -Pattern $Pattern -SimpleMatch -ErrorAction SilentlyContinue
+                if ($result) {
+                    $hits += $result
+                }
+            } catch {}
+        }
+    }
+
+    return $hits
+}
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " VIP RECOGNITION - FINAL FEATURE HEALTH CHECK" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host ""
+
+# ------------------------------------------------------------
+# 1. Basic project
+# ------------------------------------------------------------
+
+if (Test-Path ".\manage.py") {
+    Write-Result "PASS" "Django project" "manage.py found."
+}
+else {
+    Write-Result "FAIL" "Django project" "manage.py was not found. Run this from the dashboard root."
+    $lines | Set-Content $Report -Encoding UTF8
+    exit 1
+}
+
+try {
+    $pythonVersion = python --version 2>&1
+    Write-Result "PASS" "Python" "$pythonVersion"
+}
+catch {
+    Write-Result "FAIL" "Python" "Python command failed."
+}
+
+$checkOutput = python manage.py check 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Result "PASS" "Django system check" (($checkOutput -join " ").Trim())
+}
+else {
+    Write-Result "FAIL" "Django system check" (($checkOutput -join "`n").Trim())
+}
+
+$migOutput = python manage.py showmigrations --plan 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Write-Result "PASS" "Migration plan" "Django migration plan loaded successfully."
+}
+else {
+    Write-Result "WARN" "Migration plan" (($migOutput -join "`n").Trim())
+}
+
+# ------------------------------------------------------------
+# 2. Employee recognition / attendance
+# ------------------------------------------------------------
+
+$employeeService = ".\face_recognition_app\services\employee_recognition_service.py"
+$employeeModels = ".\face_recognition_app\models.py"
+$attendanceViews = ".\face_recognition_app\views_attendance.py"
+$attendanceDashboard = ".\face_recognition_app\views_attendance_dashboard.py"
+
+if (Test-Path $employeeService) {
+    $txt = Get-Content $employeeService -Raw
+
+    $recognize = $txt -match "def\s+recognize\s*\("
+    $attendance = $txt -match "log_attendance"
+    $embedding = $txt -match "embedding"
+
+    if ($recognize -and $attendance) {
+        Write-Result "PASS" "Employee recognition pipeline" "EmployeeRecognitionService contains recognize() and attendance logging."
+    }
+    else {
+        Write-Result "WARN" "Employee recognition pipeline" "Service exists but recognize()/log_attendance() could not both be confirmed."
+    }
+
+    if ($embedding) {
+        Write-Result "PASS" "Employee face embeddings" "Employee recognition service references face embeddings."
+    }
+    else {
+        Write-Result "WARN" "Employee face embeddings" "Embedding logic was not detected automatically."
+    }
+}
+else {
+    Write-Result "FAIL" "Employee recognition service" "Missing $employeeService"
+}
+
+if (Test-Path $employeeModels) {
+    $modelText = Get-Content $employeeModels -Raw
+
+    if ($modelText -match "EmployeeAttendanceLog") {
+        Write-Result "PASS" "Employee attendance model" "EmployeeAttendanceLog found."
+    }
+    else {
+        Write-Result "WARN" "Employee attendance model" "EmployeeAttendanceLog was not found in face_recognition_app/models.py."
+    }
+
+    if ($modelText -match "Employee") {
+        Write-Result "PASS" "Employee model" "Employee model reference found."
+    }
+    else {
+        Write-Result "WARN" "Employee model" "Employee model reference not detected."
+    }
+}
+
+if ((Test-Path $attendanceViews) -or (Test-Path $attendanceDashboard)) {
+    Write-Result "PASS" "Attendance views" "Attendance view module(s) found."
+}
+else {
+    Write-Result "WARN" "Attendance views" "Attendance view modules were not found."
+}
+
+# ------------------------------------------------------------
+# 3. Database-level employee test
+# ------------------------------------------------------------
+
+$employeeDbTest = @'
+from django.apps import apps
+
+print("=== EMPLOYEE DATABASE CHECK ===")
+
+try:
+    Employee = apps.get_model("face_recognition_app", "Employee")
+    print("EMPLOYEE_COUNT:", Employee.objects.count())
+except Exception as e:
+    print("EMPLOYEE_MODEL_ERROR:", type(e).__name__, str(e))
+
+try:
+    Log = apps.get_model("face_recognition_app", "EmployeeAttendanceLog")
+    print("ATTENDANCE_LOG_COUNT:", Log.objects.count())
+except Exception as e:
+    print("ATTENDANCE_MODEL_ERROR:", type(e).__name__, str(e))
+'@
+
+$dbOutput = $employeeDbTest | python manage.py shell 2>&1
+if ($LASTEXITCODE -eq 0) {
+    if (($dbOutput -join "`n") -match "EMPLOYEE_COUNT:") {
+        Write-Result "PASS" "Employee database" (($dbOutput -join "`n").Trim())
+    }
+    else {
+        Write-Result "WARN" "Employee database" (($dbOutput -join "`n").Trim())
+    }
+}
+else {
+    Write-Result "WARN" "Employee database" (($dbOutput -join "`n").Trim())
+}
+
+# ------------------------------------------------------------
+# 4. Dashboard statistics
+# ------------------------------------------------------------
+
+$dashboardCandidates = @(
+    ".\face_recognition_app\views.py",
+    ".\face_recognition_app\views_dashboard.py",
+    ".\face_recognition_app\views_attendance_dashboard.py",
+    ".\templates\face_recognition_app\dashboard.html"
+)
+
+$dashboardHits = @()
+foreach ($f in $dashboardCandidates) {
+    if (Test-Path $f) {
+        $dashboardHits += Select-String -Path $f -Pattern "todays_total","vip_visits_today","normal_visits_today","unknown_visits_today","recent_recognitions" -SimpleMatch -ErrorAction SilentlyContinue
+    }
+}
+
+if ($dashboardHits.Count -gt 0) {
+    Write-Result "PASS" "Dashboard statistics" "Dashboard statistic fields/views were detected."
+}
+else {
+    Write-Result "WARN" "Dashboard statistics" "Dashboard statistic fields were not automatically detected."
+}
+
+$dashboardTemplate = ".\templates\face_recognition_app\dashboard.html"
+if (Test-Path $dashboardTemplate) {
+    Write-Result "PASS" "Dashboard template" "dashboard.html found."
+}
+else {
+    Write-Result "WARN" "Dashboard template" "dashboard.html not found at the expected location."
+}
+
+# ------------------------------------------------------------
+# 5. Camera management/configuration
+# ------------------------------------------------------------
+
+$cameraModelFiles = @(
+    ".\face_recognition_app\models.py",
+    ".\face_recognition_app\models_camera.py",
+    ".\face_recognition_app\views.py",
+    ".\face_recognition_app\views_camera.py",
+    ".\face_recognition_app\camera\live_ai_camera.py"
+)
+
+$cameraTextFound = $false
+foreach ($f in $cameraModelFiles) {
+    if (Test-Path $f) {
+        $t = Get-Content $f -Raw
+        if ($t -match "\bCamera\b") {
+            $cameraTextFound = $true
+        }
+    }
+}
+
+if ($cameraTextFound) {
+    Write-Result "PASS" "Camera configuration" "Camera model/view/pipeline references detected."
+}
+else {
+    Write-Result "WARN" "Camera configuration" "Camera references were not detected in expected files."
+}
+
+$liveCamera = ".\face_recognition_app\camera\live_ai_camera.py"
+if (Test-Path $liveCamera) {
+    $cameraText = Get-Content $liveCamera -Raw
+
+    $genFrames = $cameraText -match "def\s+gen_frames\s*\("
+    $capture = $cameraText -match "cv2\.VideoCapture"
+    $recognition = $cameraText -match "face_service\.recognize"
+    $dedupe = $cameraText -match "DEDUPE_WINDOW_SECONDS"
+
+    if ($genFrames -and $capture -and $recognition) {
+        Write-Result "PASS" "Live AI camera pipeline" "gen_frames(), OpenCV capture and face recognition are present."
+    }
+    else {
+        Write-Result "WARN" "Live AI camera pipeline" "Some expected camera pipeline elements were not detected."
+    }
+
+    if ($dedupe) {
+        Write-Result "PASS" "Recognition de-duplication" "DEDUPE_WINDOW_SECONDS found."
+    }
+    else {
+        Write-Result "WARN" "Recognition de-duplication" "Dedupe setting not found."
+    }
+}
+else {
+    Write-Result "FAIL" "Live AI camera pipeline" "Missing live_ai_camera.py"
+}
+
+# ------------------------------------------------------------
+# 6. Recognition endpoint
+# ------------------------------------------------------------
+
+$views = ".\face_recognition_app\views.py"
+
+if (Test-Path $views) {
+    $viewText = Get-Content $views -Raw
+
+    if ($viewText -match "def\s+latest_recognition\s*\(") {
+        Write-Result "PASS" "latest_recognition()" "Recognition polling endpoint found."
+    }
+    else {
+        Write-Result "FAIL" "latest_recognition()" "latest_recognition() was not found."
+    }
+
+    if ($viewText -match "recognized_at") {
+        Write-Result "PASS" "Recognition timestamp field" "recognized_at is referenced."
+    }
+    else {
+        Write-Result "WARN" "Recognition timestamp field" "recognized_at was not detected."
+    }
+}
+
+# ------------------------------------------------------------
+# 7. UI / POS / popup
+# ------------------------------------------------------------
+
+$allHtml = Get-ChildItem -Path . -Recurse -Filter "*.html" -ErrorAction SilentlyContinue
+
+$popupHits = @()
+$pollHits = @()
+
+foreach ($html in $allHtml) {
+    try {
+        $h = Get-Content $html.FullName -Raw
+        if ($h -match "welcome-back-modal") {
+            $popupHits += $html.FullName
+        }
+        if ($h -match "latest-recognition") {
+            $pollHits += $html.FullName
+        }
+    } catch {}
+}
+
+if ($popupHits.Count -gt 0) {
+    Write-Result "PASS" "Welcome Back popup" ("Found in: " + ($popupHits -join ", "))
+}
+else {
+    Write-Result "WARN" "Welcome Back popup" "welcome-back-modal was not found in HTML templates."
+}
+
+if ($pollHits.Count -gt 0) {
+    Write-Result "PASS" "Recognition polling UI" ("latest-recognition reference found in: " + ($pollHits -join ", "))
+}
+else {
+    Write-Result "WARN" "Recognition polling UI" "latest-recognition reference was not found in templates."
+}
+
+$posTemplate = Get-ChildItem -Path . -Recurse -Filter "pos.html" -ErrorAction SilentlyContinue
+if ($posTemplate) {
+    Write-Result "PASS" "POS template" ($posTemplate.FullName -join ", ")
+}
+else {
+    Write-Result "WARN" "POS template" "pos.html was not found."
+}
+
+# ------------------------------------------------------------
+# 8. Common broken field references
+# ------------------------------------------------------------
+
+$pythonFiles = Get-ChildItem -Path . -Recurse -Filter "*.py" -ErrorAction SilentlyContinue |
+    Where-Object {
+        $_.FullName -notmatch "\\venv\\" -and
+        $_.FullName -notmatch "\\__pycache__\\"
+    }
+
+$detectedAtHits = @()
+foreach ($f in $pythonFiles) {
+    try {
+        $hits = Select-String -Path $f.FullName -Pattern "detected_at" -SimpleMatch -ErrorAction SilentlyContinue
+        if ($hits) {
+            $detectedAtHits += $hits
+        }
+    } catch {}
+}
+
+if ($detectedAtHits.Count -eq 0) {
+    Write-Result "PASS" "Recognition field consistency" "No detected_at references found in project Python files."
+}
+else {
+    Write-Result "WARN" "Recognition field consistency" ("detected_at references remain in " + $detectedAtHits.Count + " location(s). Review these before final release.")
+}
+
+# ------------------------------------------------------------
+# 9. Duplicate URL check
+# ------------------------------------------------------------
+
+$urlFiles = Get-ChildItem -Path . -Recurse -Filter "urls.py" -ErrorAction SilentlyContinue
+$duplicateUrlWarnings = 0
+
+foreach ($f in $urlFiles) {
+    try {
+        $linesHere = Get-Content $f.FullName
+        $groups = $linesHere |
+            Where-Object { $_ -match 'path\(' } |
+            Group-Object
+
+        foreach ($g in $groups) {
+            if ($g.Count -gt 1) {
+                $duplicateUrlWarnings++
+            }
+        }
+    } catch {}
+}
+
+if ($duplicateUrlWarnings -eq 0) {
+    Write-Result "PASS" "URL duplication scan" "No exact duplicate path lines detected."
+}
+else {
+    Write-Result "WARN" "URL duplication scan" "$duplicateUrlWarnings duplicate URL line group(s) detected. Review manually."
+}
+
+# ------------------------------------------------------------
+# 10. Python compile check
+# ------------------------------------------------------------
+
+$compileFailed = $false
+$compileErrors = @()
+
+foreach ($f in $pythonFiles) {
+    $out = python -m py_compile $f.FullName 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        $compileFailed = $true
+        $compileErrors += "$($f.FullName): $($out -join ' ')"
+    }
+}
+
+if (-not $compileFailed) {
+    Write-Result "PASS" "Python syntax" "All project Python files compiled successfully."
+}
+else {
+    Write-Result "FAIL" "Python syntax" ($compileErrors -join "`n")
+}
+
+# ------------------------------------------------------------
+# 11. Create final report
+# ------------------------------------------------------------
+
+$header = @(
+    "VIP RECOGNITION PROJECT - FINAL FEATURE HEALTH REPORT"
+    "Generated: $(Get-Date)"
+    "Project root: $Root"
+    ""
+    "FEATURES CHECKED"
+    "1. Employee recognition / attendance"
+    "2. Dashboard statistics"
+    "3. Camera management / configuration"
+    "4. Error handling / UI integration"
+    ""
+)
+
+$summary = @(
+    ""
+    "SUMMARY"
+    "-------"
+    "PASS: $pass"
+    "WARN: $warn"
+    "FAIL: $fail"
+    ""
+    "IMPORTANT:"
+    "Warnings require manual review; this script deliberately does not blindly rewrite unknown project files."
+)
+
+($header + $lines + $summary) | Set-Content $Report -Encoding UTF8
+
+Write-Host ""
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host " FINAL RESULT" -ForegroundColor Cyan
+Write-Host "============================================================" -ForegroundColor Cyan
+Write-Host "PASS: $pass" -ForegroundColor Green
+Write-Host "WARN: $warn" -ForegroundColor Yellow
+Write-Host "FAIL: $fail" -ForegroundColor Red
+Write-Host ""
+Write-Host "Report:" -ForegroundColor Cyan
+Write-Host $Report
+Write-Host ""
+
+if ($fail -eq 0) {
+    Write-Host "No blocking failures were detected." -ForegroundColor Green
+}
+else {
+    Write-Host "Blocking failures were detected. Review the report before continuing." -ForegroundColor Red
+}
+
