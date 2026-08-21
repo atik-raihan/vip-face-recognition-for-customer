@@ -75,69 +75,52 @@
     </div>
 
     <!-- Camera & VIP Status -->
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header bg-dark text-white">
-                <h3 class="card-title mb-0">
-                    <i class="fas fa-video"></i>
-                    Live AI Recognition Camera
-                    <span class="badge badge-success ml-2">
-                        LIVE
-                    </span>
-                </h3>
-            </div>
-
-            <div class="card-body p-0 bg-dark text-center">
-
-                <div style="
-                    width:100%;
-                    min-height:420px;
-                    display:flex;
-                    justify-content:center;
-                    align-items:center;
-                    background:#111;
-                    overflow:hidden;
-                ">
-
-                    <img
-                        src="{% url 'video_feed' %}"
-                        id="live-recognition-camera"
-                        alt="Live AI Recognition Camera"
-                        style="
-                            width:100%;
-                            max-height:600px;
-                            object-fit:contain;
-                            display:block;
-                        "
-                    >
-
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header {% if camera_status == 'ONLINE' %}bg-success{% else %}bg-secondary{% endif %}">
+                    <h3 class="card-title">
+                        <i class="fas fa-video"></i>
+                        Camera Status
+                    </h3>
                 </div>
-
+                <div class="card-body text-center">
+                    <i class="fas fa-video fa-4x {% if camera_status == 'ONLINE' %}text-success{% else %}text-muted{% endif %} mb-3"></i>
+                    <h3>{{ camera_status }}</h3>
+                    <p>
+                        {% if camera_status == 'ONLINE' %}
+                            Face Recognition Service is Running
+                        {% else %}
+                            Face Recognition Service is Offline
+                        {% endif %}
+                    </p>
+                </div>
             </div>
+        </div>
 
-            <div class="card-footer text-center">
-
-                {% if camera_status == 'ONLINE' %}
-
-                    <span class="text-success">
-                        <i class="fas fa-circle"></i>
-                        AI Recognition Active
-                    </span>
-
-                {% else %}
-
-                    <span class="text-danger">
-                        <i class="fas fa-circle"></i>
-                        Camera Online
-                    </span>
-
-                {% endif %}
-
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-warning">
+                    <h3 class="card-title">
+                        <i class="fas fa-star"></i>
+                        Last VIP Detection
+                    </h3>
+                </div>
+                <div class="card-body">
+                    {% if last_vip %}
+                        <h4>{{ last_vip.customer.name }}</h4>
+                        <p>Detected at {{ last_vip.recognized_at|date:"Y-m-d H:i" }}</p>
+                        <span class="badge badge-warning">VIP</span>
+                    {% else %}
+                        <h4>No VIP detected yet</h4>
+                        <p>Waiting for camera recognition...</p>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
+
     <!-- Recent Transactions -->
-     
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Recent Transactions</h3>
